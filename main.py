@@ -32,7 +32,7 @@ bot = discord.AutoShardedBot(case_insensitive=True, command_prefix=";", intents=
 bot.topggpy = topgg.DBLClient(bot, topggToken)
 
 debugMode = False
-egirlVersion = '1.17.1'
+egirlVersion = '1.17.2b'
 loggingChannel = 994443884878901378
 reportManager = 402569003903483904
 
@@ -428,7 +428,6 @@ async def _egirl(ctx):
     ]
     egirlEmbed.add_field(name=f'extra', value=f'{tip[random.randrange(0, len(tip))]}', inline=False)
     egirlEmbed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}'),
-    egirlEmbed.set_thumbnail(url=bot.user.display_avatar.url)
     await ctx.respond(embed=egirlEmbed)
 
 
@@ -887,7 +886,7 @@ async def _cat(ctx):
 
 @bot.slash_command(
     name="howboopable",
-    description="check someone's cuteness",
+    description="check someone's boopability",
 )
 async def _howboopable(ctx, user: Option(discord.Member, "choose who to check boopability for", required=False)):
     if user == None: user = ctx.author
