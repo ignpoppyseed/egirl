@@ -1,20 +1,19 @@
 import asyncio
-import datetime
 import glob
 import json
 import math
 import os
 import random
 import time
-import topgg
+import textwrap
+from io import BytesIO
 
 import aiohttp
 import discord
 import requests
-from io import BytesIO
+import topgg
 from discord import Option, OptionChoice
 from discord.ext import tasks
-from discord.utils import get
 from dotenv import load_dotenv
 from PIL import Image, ImageDraw, ImageFont
 
@@ -22,6 +21,8 @@ load_dotenv()
 TOKEN = os.getenv('TOKEN')
 hyToken = os.getenv('HYPIXEL_API_TOKEN')
 topggToken = os.getenv('TOPGGTOKEN')
+booksToken = os.getenv('GOOGLE_BOOKS')
+weatherToken = os.getenv('OPENWEATHER')
 
 intents = discord.Intents.default()
 intents.guilds = True
@@ -32,7 +33,7 @@ bot = discord.AutoShardedBot(case_insensitive=True, command_prefix=";", intents=
 bot.topggpy = topgg.DBLClient(bot, topggToken)
 
 debugMode = False
-egirlVersion = '1.17.2b'
+egirlVersion = '1.19'
 loggingChannel = 994443884878901378
 reportManager = 402569003903483904
 
@@ -401,12 +402,12 @@ async def _help(ctx):
     embed = discord.Embed(title="egirl's Help Menu",
     description= "**[invite !](https://cloverbrand.xyz/egirl/invite/)** | **[website !](https://cloverbrand.xyz)** | **[vote !](https://top.gg/bot/825415772075196427/vote)**",
     color = 0x202225)
-    embed.add_field(name = "utility", value = "```\nmessage\neditmessage\nnuke\nkick\nban\npoll\nqotd```", inline = True)
-    embed.add_field(name = "fun", value = "```\nrp\nsolorp\n8ball\nslaydetector\nhowcute\nvs\nrockpaperscissors\nhowboopable\ntod\n```", inline = True)
-    embed.add_field(name = "egirl", value = "```\negirl\nhelp\ninvite\nreportissue\n```", inline = True)
-    embed.add_field(name = "game info", value = "```\nminer\nhypixel\n```", inline = True)
-    embed.add_field(name = "config", value = "```\nwelcome\ngoodbye\nuwumode\n```", inline = True)
-    embed.add_field(name = "images", value = "```\npossum\ndog\ncat\n```", inline = True)
+    embed.add_field(name = "utility", value = "```\n- message\n- editmessage\n- nuke\n- kick\n- ban\n- poll\n- qotd\n- choose```", inline = True)
+    embed.add_field(name = "fun", value = "```\n- rp\n- solorp\n- 8ball\n- slaydetector\n- howcute\n- vs\n- rockpaperscissors\n- howboopable\n- tod\n- animatedstorytitle\n- jortsweather```", inline = True)
+    embed.add_field(name = "egirl", value = "```\n- egirl\n- help\n- invite\n- reportissue```", inline = True)
+    embed.add_field(name = "game info", value = "```\n- miner\n- hypixel```", inline = True)
+    embed.add_field(name = "config", value = "```\n- welcome\n- goodbye\n- uwumode```", inline = True)
+    embed.add_field(name = "images", value = "```\n- possum\n- dog\n- cat\n- imagegen clyde\n- imagegen tweet```", inline = True)
     embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
     await ctx.respond(embed=embed)
 
@@ -1095,8 +1096,7 @@ async def _nuke(ctx,
 async def _kick(ctx, member: Option(discord.Member, 'choose member to kick', required=True), reason: Option(str, 'reason displayed in audit log', required=True)):
     if ctx.author.guild_permissions.administrator:
         try:
-            await member.ban(reason=reason)
-            await member.kick()
+            await member.kick(reason=reason, delete_message_seconds=None, delete_message_days=None)
             await ctx.respond(f'**{member}** was kicked! ✅', ephemeral=True)
         except:
             await ctx.respond(f'Failed to kick **{member}**, is their role higher than egirl\'s? Are they in the server? ❌', ephemeral=True)
@@ -1107,7 +1107,7 @@ async def _kick(ctx, member: Option(discord.Member, 'choose member to kick', req
 async def _ban(ctx, member: Option(discord.Member, 'choose member to ban', required=True), reason: Option(str, 'reason displayed in audit log', required=True)):
     if ctx.author.guild_permissions.administrator:
         try:
-            await member.ban(reason=reason)
+            await member.ban(reason=reason, delete_message_seconds=None, delete_message_days=None)
             await ctx.respond(f'**{member}** was banned! ✅', ephemeral=True)
         except:
             await ctx.respond(f'Failed to ban **{member}**, is their role higher than egirl\'s? Are they in the server? ❌', ephemeral=True)
@@ -1115,9 +1115,18 @@ async def _ban(ctx, member: Option(discord.Member, 'choose member to ban', requi
         await ctx.respond('You must be an administrator to ban members! ❌', ephemeral=True)
 
 @bot.slash_command(name='qotd', description='random qotd')
-async def _qotd(ctx, role: Option(discord.Role, 'choose qotd role', required=False, default=None), channel: Option(discord.TextChannel, 'choose text channel to send qotd', required=False, default=None)):
+async def _qotd(ctx, role: Option(discord.Role, 'choose qotd role', required=False, default=None), 
+channel: Option(discord.TextChannel, 'choose text channel to send qotd', required=False, default=None), 
+question: Option(str, 'optional custom question', required=False, default=None)):
     await ctx.response.send_message('thinking... 🕐', ephemeral=True)
-    res = requests.get('https://chillihero.api.stdlib.com/qotd@0.1.3/question/').json()
+    if question == None:
+        res = requests.get('https://chillihero.api.stdlib.com/qotd@0.1.3/question/').json()
+    else:
+        if question[len(question)-1:] == '?':
+            pass
+        else:
+            question += '?'
+        res = question
     if role == None:
         mention = ''
     else:
@@ -1131,7 +1140,7 @@ async def _qotd(ctx, role: Option(discord.Role, 'choose qotd role', required=Fal
         await channel.send(mention, embed=embed)
         await ctx.edit(content='done! ✅')
 
-@bot.slash_command(name='poll', description='random qotd')
+@bot.slash_command(name='poll', description='poll users')
 async def _poll(ctx, question: Option(str, 'poll question', required=True)):
     await ctx.response.send_message('thinking... 🕐', ephemeral=True)
     if question[len(question)-1:] == '?':
@@ -1164,4 +1173,199 @@ async def _reportissue(ctx, title: Option(str, 'report title', required=True), r
             await bot.get_channel(loggingChannel).send(f'<@{reportManager}>! report filed!')
             reportLock.append(ctx.author.id)
 
+@bot.slash_command(name='poppyscommand', description='-')
+async def _poppyscommand(ctx, command: Option(str, '-', required=True)):
+    if ctx.author.id == reportManager:
+        command = command.lower()
+        if command == 'topmember':
+            high = 0
+            for guild in bot.guilds:
+                if guild.member_count > high:
+                    high = guild.member_count
+                    highName = guild.name
+                else:
+                    pass
+            await ctx.respond('guild with most members is '+highName+' with '+str(high)+' members', ephemeral=True)
+        if command == 'keegan':
+            await ctx.respond('keegan? as in poppy\'s extremely romanoledgeable wife?', ephemeral=True)
+        if command == 'banner':
+            user = ctx.author            
+            bUser = await bot.fetch_user(user.id)
+            try:
+                bannerURL = bUser.banner.url
+                bannerEmbed = discord.Embed(title=f'', description=f'{user}\'s banner', color=0x202225)
+                bannerEmbed.set_image(url=bannerURL)
+            except AttributeError:
+                accentC = bUser.accent_color
+                if accentC == None:
+                    bannerEmbed = discord.Embed(title=f'', description=f'no banner was found for {user}. perhaps they dont have nitro or a custom color?', color=0x202225)
+                else:
+                    bannerURL = f'https://singlecolorimage.com/get/' + str(accentC).replace('#', '') + '/600x240'
+                    bannerEmbed = discord.Embed(title=f'', description=f'{user}\'s banner', color=accentC)
+                    bannerEmbed.set_image(url=bannerURL)
+            bannerEmbed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}'),
+            await ctx.respond(embed=bannerEmbed)
+        if command == 'profile':
+            user = ctx.author
+            pUser = await bot.fetch_user(user.id)
+            proEmbed = discord.Embed(title=f'{user}\'s profile', description='', color=0x202225)
+            try:
+                bannerURL = pUser.banner.url
+                proEmbed.set_image(url=bannerURL)
+            except AttributeError:
+                accentC = pUser.accent_color
+                if accentC == None:
+                    bannerURL = ''
+                else:
+                    bannerURL = f'https://singlecolorimage.com/get/' + str(accentC).replace('#', '') + '/600x240'
+            pfpURL = user.display_avatar.url
+            print(user.activities)
+            try:
+                actEmo1 = user.activities[0].emoji
+            # 1st activity
+            except AttributeError:
+                actEmo1 = '\u200b'
+            except IndexError:
+                actEmo1 = '\u200b'
+            try:
+                actName1 = user.activities[0].name
+            except AttributeError:
+                actName1 = '\u200b'
+            except IndexError:
+                actName1 = '\u200b'
+            try:
+                actTypeDir = str(user.activities[0].type)
+            except AttributeError:
+                actTypeDir = ''
+            except IndexError:
+                actTypeDir = ''
+            if actTypeDir == 'ActivityType.playing':
+                proEmbed.add_field(name='Playing', value=f'{actName1}')
+            elif actTypeDir == 'ActivityType.custom':
+                if actName1 is None:
+                    actName1 = ' '
+                if actEmo1 is None:
+                    actEmo1 = ' '
+                proEmbed.add_field(name='Custom Status', value=f'{actEmo1} \u200b{actName1}')
+            elif actTypeDir == 'ActivityType.listening':
+                sText1 = f'**{actName1}**\n[{str(user.activities[0].title)}]({str(user.activities[0].track_url)}) - {str(user.activities[0].artist)}'
+                proEmbed.add_field(name='Listening to', value=f'{sText1}', inline=False)
+            elif actTypeDir == 'ActivityType.watching':
+                proEmbed.add_field(name='Watching', value=f'{actName1}')
+            elif actTypeDir == 'ActivityType.Streaming':
+                try:
+                    strmUrl = user.activities[0].url
+                except:
+                    strmUrl = ''
+                proEmbed.add_field(name='Streaming', value=f'[{actName1}]({strmUrl})')
+            else:
+                proEmbed.add_field(name='no activity', value=f'\u200b')
+            # 2nd activity
+            try:
+                actEmo2 = user.activities[1].emoji
+            except AttributeError:
+                actEmo2 = ''
+            except IndexError:
+                actEmo2 = ''
+            try:
+                actName2 = user.activities[1].name
+            except AttributeError:
+                actName2 = '\u200b'
+            except IndexError:
+                actName2 = '\u200b'
+            try:
+                actTypeDir = str(user.activities[1].type)
+            except AttributeError:
+                actTypeDir = ''
+            except IndexError:
+                actTypeDir = ''
+            if actTypeDir == 'ActivityType.playing':
+                proEmbed.add_field(name='Playing', value=f'{actName2}', inline=False)
+            elif actTypeDir == 'ActivityType.custom':
+                if actName2 is None:
+                    actName2 = ' '
+                if actEmo2 is None:
+                    actEmo2 = ' '
+                proEmbed.add_field(name='Custom Status', value=f'{actEmo2} \u200b{actName2}', inline=False)
+            elif actTypeDir == 'ActivityType.listening':
+                sText2 = f'**{actName2}**\n[{str(user.activities[1].title)}]({str(user.activities[1].track_url)}) - {str(user.activities[1].artist)}'
+                proEmbed.add_field(name='Listening to', value=f'{sText2}', inline=False)
+            elif actTypeDir == 'ActivityType.watching':
+                proEmbed.add_field(name='Watching', value=f'{actName2}', inline=False)
+            elif actTypeDir == 'ActivityType.Streaming':
+                try:
+                    strmUrl2 = user.activities[0].url
+                except:
+                    strmUrl2 = ''
+                proEmbed.add_field(name='Streaming', value=f'[{actName2}]({strmUrl2})', inline=False)
+            else:
+                pass
+            proEmbed.add_field(name='Joined Discord', value=f'<t:{int(user.created_at.timestamp())}:R>', inline=False)
+            proEmbed.set_image(url=bannerURL)
+            proEmbed.set_thumbnail(url=pfpURL)
+            proEmbed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}'),
+            await ctx.respond(embed=proEmbed)
+        else:
+            await ctx.respond(
+'Welcome, **poppy**!\n\
+cmds:```topmember - get largest guild egirl is present in\n\
+keegan - keegmand\n\
+profile - get prof of user (test of </profile:0>\n\
+banner - get banner of user (test of </banner:0>)```', ephemeral=True)
+    else:
+        await ctx.respond('nope', ephemeral=True)
+
+@bot.slash_command(name='choose', description='choose between multiple options, seperated by commands')
+async def _choose(ctx, choices: Option(str, 'seperate choices with commas', required=True)):
+    choices = choices.split(',')
+    embed = discord.Embed(title=f'egirl\'s Choice', description='I choose: '+choices[random.randrange(0, len(choices))], color=0x202225)
+    embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+    await ctx.respond(embed=embed)
+
+@bot.slash_command(name='animatedstorytitle', description='AI generated animated story title')
+async def _animatedstorytitle(ctx):
+    res = requests.get('https://animatedstorytitles.com/api/title').json()['title']
+    embed = discord.Embed(title=f'egirl\'s Animated Story Title', description=res, color=0x202225)
+    embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+    await ctx.respond(embed=embed)
+
+imagegen = bot.create_group(
+    "imagegen", "image gen commands"
+) 
+
+@imagegen.command(name='clyde', description='make discord\'s clyde say something!')
+async def _clyde(ctx, text: Option(str, 'text to make clyde say', reqired=True)):
+    res = requests.get(f'https://nekobot.xyz/api/imagegen?type=clyde&text={text}').json()['message']
+    embed = discord.Embed(title=f'', description=f'**message from clyde!**', color=0x202225)
+    embed.set_image(url=res)
+    embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+    await ctx.respond(embed=embed)
+
+@imagegen.command(name='tweet', description='make a fake tweet')
+async def _tweet(ctx, text: Option(str, 'text to make tweet author say', reqired=True), username: Option(str, 'username of tweet author', reqired=False, default=None)):
+    if username == None:
+        username = ctx.author.name
+    res = requests.get(f'https://nekobot.xyz/api/imagegen?type=tweet&text={text}&username={username}').json()['message']
+    embed = discord.Embed(title=f'', description=f'**new tweet from {username}!**', color=0x202225)
+    embed.set_image(url=res)
+    embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+    await ctx.respond(embed=embed)
+
+@bot.slash_command(name='jortsweather', description='decide if it\'s jorts or jeans weather')
+async def _jortsweather(ctx, city: Option(str, 'city to find weather for', reqired=True), hidden: Option(bool, 'choose if response is hidden (just in case you dont want people to see your city', required=False, default=False)):
+    apiresponse = requests.get('http://api.openweathermap.org/data/2.5/weather?appid=' + weatherToken + '&q=' + city + '&units=imperial').json()
+    if apiresponse["cod"] != "404":
+        try:
+            current_temperature = apiresponse["main"]["temp"]
+            if current_temperature >= 72:
+                dec = 'jorts'
+            elif current_temperature < 72:
+                dec = 'jeans'
+            embed = discord.Embed(title=f'egirl\'s Jorts Decider', description=f'In {apiresponse["name"]}, the current temperature is: {current_temperature}°F\nThat means it\'s **{dec}** weather!', color=0x202225)
+            embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+            await ctx.respond(embed=embed)
+        except KeyError:
+            await ctx.respond('City not found! ❌', ephemeral=True)
+    else:
+        await ctx.respond('something went wrong! use </reportissue:0> ❌', ephemeral=True)
 bot.run(TOKEN)
