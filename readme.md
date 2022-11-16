@@ -9,9 +9,9 @@
 **fun commands:** get random possum images with */possum*, play rock paper scissors with */rockpaperscissors* or stage a battle between two users with */vs*, with plenty more to come!
 
 ## **examples:**
-<img src=https://raw.githubusercontent.com/ignpoppyseed/egirl/main/github_examples/vs.png>
-<img src=https://raw.githubusercontent.com/ignpoppyseed/egirl/main/github_examples/possum.png>
-<img src=https://raw.githubusercontent.com/ignpoppyseed/egirl/main/github_examples/help.png>
+<img src=https://imgur.com/zsBMxNS.png>
+<img src=https://imgur.com/h6nrVvh.png>
+<img src=https://imgur.com/ROGVJJy.png>
 
 ## egirl is designed with her users in mind, and I know she'll fit right into your community!
 
