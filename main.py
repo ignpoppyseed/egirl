@@ -5,7 +5,7 @@ import math
 import os
 import random
 import time
-import textwrap
+import dice
 from io import BytesIO
 
 import aiohttp
@@ -13,6 +13,7 @@ import discord
 import requests
 import topgg
 from discord import Option, OptionChoice
+from discord.ui import Button, View
 from discord.ext import tasks
 from dotenv import load_dotenv
 from PIL import Image, ImageDraw, ImageFont
@@ -33,7 +34,7 @@ bot = discord.AutoShardedBot(case_insensitive=True, command_prefix=";", intents=
 bot.topggpy = topgg.DBLClient(bot, topggToken)
 
 debugMode = False
-egirlVersion = '1.19'
+egirlVersion = '1.20.1'
 loggingChannel = 994443884878901378
 reportManager = 402569003903483904
 
@@ -41,16 +42,18 @@ reportLock = []
 
 @bot.event
 async def on_ready():
+    global bootstart
     local_time = time.ctime()
     if debugMode == True:
         dbSay = '\n<<beta debugging is currently enabled by default!>>'
     elif debugMode == False:
         dbSay = '\n<<beta debugging is currently disabled by default! enable it with \'debug on\'>>'
-    print(f'{bot.user} connected to the api successfully!\nBot ID: {bot.user.id}\nLocal time: {local_time}\negirl {egirlVersion}!\ndeveloped by poppy#0001!\nTotal Servers: {len(bot.guilds)}\nhttps://cloverbrand.xyz/egirl/{dbSay}')
+    bootend = time.time()
+    boottime = str(round(bootend-bootstart, 2))+' seconds'
+    print(f'{bot.user} connected to the api successfully!\nBot ID: {bot.user.id}\nLocal time: {local_time}\nBoot time: {boottime}\negirl {egirlVersion}!\ndeveloped by poppy#0001!\nTotal Servers: {len(bot.guilds)}\nhttps://cloverbrand.xyz/egirl/{dbSay}')
     pfp_task.start()
     stat_task.start()
     topggStats.start()
-    await bot.get_channel(loggingChannel).send(f'{bot.user} connected to the api successfully!\nBot ID: {bot.user.id}\nLocal time: {local_time}\negirl {egirlVersion}!\ndeveloped by poppy#0001!\nTotal Servers: {len(bot.guilds)}\nhttps://cloverbrand.xyz/egirl/{dbSay}')
 
 
 def get_welcome_channel(guildID):
@@ -130,7 +133,7 @@ async def on_member_remove(member):
         pass
 
 
-@tasks.loop(minutes=10)
+@tasks.loop(minutes=30)
 async def pfp_task():
     try:
         aviArray = glob.glob('./images/*.jpg')
@@ -235,7 +238,7 @@ async def _editmessage(
             return
         try:
             embedDL = grabbedMessage.embeds[0].to_dict()
-            if embedDL['footer']['text'] == 'egirl':
+            if embedDL['footer']['text'] != 'egirl':
                 await ctx.respond('Please select a message that contains an egirl embed! ❌', ephemeral=True)
                 return
         except:
@@ -402,10 +405,10 @@ async def _help(ctx):
     embed = discord.Embed(title="egirl's Help Menu",
     description= "**[invite !](https://cloverbrand.xyz/egirl/invite/)** | **[website !](https://cloverbrand.xyz)** | **[vote !](https://top.gg/bot/825415772075196427/vote)**",
     color = 0x202225)
-    embed.add_field(name = "utility", value = "```\n- message\n- editmessage\n- nuke\n- kick\n- ban\n- poll\n- qotd\n- choose```", inline = True)
+    embed.add_field(name = "utility", value = "```\n- message\n- editmessage\n- nuke\n- kick\n- ban\n- nick set\n- nick reset\n- poll\n- qotd\n- profile\n- passwordgenerator```", inline = True)
     embed.add_field(name = "fun", value = "```\n- rp\n- solorp\n- 8ball\n- slaydetector\n- howcute\n- vs\n- rockpaperscissors\n- howboopable\n- tod\n- animatedstorytitle\n- jortsweather```", inline = True)
+    embed.add_field(name = "other", value = "```\n- miner\n- hypixel\n- flip\n- roll expression\n- roll help\n- choose\n- formatting```", inline = True)
     embed.add_field(name = "egirl", value = "```\n- egirl\n- help\n- invite\n- reportissue```", inline = True)
-    embed.add_field(name = "game info", value = "```\n- miner\n- hypixel```", inline = True)
     embed.add_field(name = "config", value = "```\n- welcome\n- goodbye\n- uwumode```", inline = True)
     embed.add_field(name = "images", value = "```\n- possum\n- dog\n- cat\n- imagegen clyde\n- imagegen tweet```", inline = True)
     embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
@@ -1053,15 +1056,24 @@ async def _uwuifier(ctx, text: Option(str, 'text to uwuify', required=True), sen
     text1 = text1.replace('th','d')
     text1 = text1.replace('Th','D')
     text1 = text1.replace('tH','D')
+    text1Sp = text1.split()
+    rText = ''
+    for w in text1Sp:
+        r = random.randrange(0, 15)
+        if r == 0:
+            f = w[0] + '- '+ w + ' '
+            rText += f
+        else: rText += w + ' '
+
     embed = discord.Embed(title=f'egirl\'s UwUifier', description=f'\u200b', color=0x202225)
     embed.set_thumbnail(url=bot.user.avatar.url)
     embed.add_field(name=f'Old Text', value=f'{text}', inline=False)
-    embed.add_field(name=f'UwUified Text', value=f'{text1}', inline=False)
+    embed.add_field(name=f'UwUified Text', value=f'{rText}', inline=False)
     try:
         if send_as_user == True:
             await ctx.respond(embed=embed, ephemeral=True)
             webhook = await ctx.channel.create_webhook(name=ctx.author.name)
-            await webhook.send(f'{text1}', username=ctx.author.nick, avatar_url=ctx.author.avatar.url)
+            await webhook.send(f'{rText}', username=ctx.author.nick, avatar_url=ctx.author.avatar.url)
             webhooks = await ctx.channel.webhooks()
             for webhook in webhooks:
                     await webhook.delete()
@@ -1118,27 +1130,30 @@ async def _ban(ctx, member: Option(discord.Member, 'choose member to ban', requi
 async def _qotd(ctx, role: Option(discord.Role, 'choose qotd role', required=False, default=None), 
 channel: Option(discord.TextChannel, 'choose text channel to send qotd', required=False, default=None), 
 question: Option(str, 'optional custom question', required=False, default=None)):
-    await ctx.response.send_message('thinking... 🕐', ephemeral=True)
-    if question == None:
-        res = requests.get('https://chillihero.api.stdlib.com/qotd@0.1.3/question/').json()
-    else:
-        if question[len(question)-1:] == '?':
-            pass
+    if ctx.author.guild_permissions.mention_everyone:
+        await ctx.response.send_message('thinking... 🕐', ephemeral=True)
+        if question == None:
+            res = requests.get('https://chillihero.api.stdlib.com/qotd@0.1.3/question/').json()
         else:
-            question += '?'
-        res = question
-    if role == None:
-        mention = ''
+            if question[len(question)-1:] == '?':
+                pass
+            else:
+                question += '?'
+            res = question
+        if role == None:
+            mention = ''
+        else:
+            mention = role.mention
+        embed = discord.Embed(title=f'egirl\'s Question of The Day', description=res, color=0x202225)
+        embed.set_thumbnail(url='https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/twitter/322/question-mark_2753.png')
+        if channel == None:
+            await ctx.channel.send(mention, embed=embed)
+            await ctx.edit(content='done! ✅')
+        else:
+            await channel.send(mention, embed=embed)
+            await ctx.edit(content='done! ✅')
     else:
-        mention = role.mention
-    embed = discord.Embed(title=f'egirl\'s Question of The Day', description=res, color=0x202225)
-    embed.set_thumbnail(url='https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/twitter/322/question-mark_2753.png')
-    if channel == None:
-        await ctx.channel.send(mention, embed=embed)
-        await ctx.edit(content='done! ✅')
-    else:
-        await channel.send(mention, embed=embed)
-        await ctx.edit(content='done! ✅')
+        await ctx.respond('This command requires the \'Mention Everyone\' permission! ❌', ephemeral=True)
 
 @bot.slash_command(name='poll', description='poll users')
 async def _poll(ctx, question: Option(str, 'poll question', required=True)):
@@ -1174,21 +1189,58 @@ async def _reportissue(ctx, title: Option(str, 'report title', required=True), r
             reportLock.append(ctx.author.id)
 
 @bot.slash_command(name='poppyscommand', description='-')
-async def _poppyscommand(ctx, command: Option(str, '-', required=True)):
+async def _poppyscommand(ctx, command: Option(str, '-', required=True), user: Option(discord.Member, '-', required=False)):
     if ctx.author.id == reportManager:
         command = command.lower()
         if command == 'topmember':
             high = 0
             for guild in bot.guilds:
                 if guild.member_count > high:
-                    high = guild.member_count
-                    highName = guild.name
+                    if guild.name == 'Discord Bots':
+                        pass
+                    else:
+                        high = guild.member_count
+                        highName = guild.name
                 else:
                     pass
             await ctx.respond('guild with most members is '+highName+' with '+str(high)+' members', ephemeral=True)
-        if command == 'keegan':
-            await ctx.respond('keegan? as in poppy\'s extremely romanoledgeable wife?', ephemeral=True)
-        if command == 'banner':
+        elif command == 'gcount':
+            await ctx.respond(f'```Total Servers: {len(bot.guilds)}```')
+        elif command == 'keegan':
+            await ctx.respond('keegan? as in poppy\'s extremely romanoledgeable wife?')
+        elif command == 'button':
+            button = Button(label='kys', style=discord.ButtonStyle.blurple, emoji='❤️')
+
+            async def button_callback(interaction):
+                time1 = str(time.time()).split('.')[0]
+                await interaction.response.edit_message(content=f'<t:{time1}:R>')
+            
+            button.callback = button_callback
+
+            view = View(timeout=5)
+            view.add_item(button)
+            time1 = str(time.time()).split('.')[0]
+            await ctx.respond(f'<t:{time1}:R>', view=view, ephemeral=True)
+        elif command == 'markdown':
+            embed = discord.Embed(title=f'egirl\'s Markdown Syntax Help', description=f'Formatting is placed on either side of the desired text, like *this*. \
+            Some formatting (notably italics and bolding) can be combined to make new formatting, like ***this***, which results in bold and italic text (this). \
+            Formatting doesn\'t apply in codeblocks or when escaped with a backslash (*See, I\'m not formatted!*, \*Me either!\*).', color=0x202225)
+            embed.add_field(name='Syntax', value='Double Underscore: \_\_underline\_\_  __text__\n\
+            Single Asterisk: \*italics\* *text*\n\
+            Double Asterisk: \**bold\** **text**\n\
+            Double Tilde: \~~strikethrough\~~ ~~text~~\n\
+            Single Backtick: \`single line codeblock\` `text`\n\
+            Greater Than: > Quote\n\
+            > text\n\
+            Triple Backtick: \`\`\`multi line codeblock\`\`\` \n\
+            ```\n\
+            sample\n\
+            text\n\
+            ```', inline=False)
+            embed.add_field(name='Helpful Resources', value='[Official Discord Formatting Guide](https://support.discord.com/hc/en-us/articles/210298617-Markdown-Text-101-Chat-Formatting-Bold-Italic-Underline-)\n\
+                [matthewzring\'s Guide With Nice Examples!](https://gist.github.com/matthewzring/9f7bbfd102003963f9be7dbcf7d40e51)', inline=False)
+            await ctx.respond(embed=embed)
+        elif command == 'banner':
             user = ctx.author            
             bUser = await bot.fetch_user(user.id)
             try:
@@ -1205,113 +1257,101 @@ async def _poppyscommand(ctx, command: Option(str, '-', required=True)):
                     bannerEmbed.set_image(url=bannerURL)
             bannerEmbed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}'),
             await ctx.respond(embed=bannerEmbed)
-        if command == 'profile':
-            user = ctx.author
-            pUser = await bot.fetch_user(user.id)
-            proEmbed = discord.Embed(title=f'{user}\'s profile', description='', color=0x202225)
+        elif command == 'profile':
+            if user == None:
+                user = ctx.author
+            user = await bot.fetch_user(user.id)
+            flags = ['partner', 'staff', 'discord_certified_moderator', 'hypesquad', 'hypesquad_balance', 
+            'hypesquad_bravery', 'hypesquad_brilliance', 'bug_hunter', 'bug_hunter_level_2',
+            #this is where active dev would go
+            'early_verified_bot_developer', 'early_supporter', 'verified_bot']
+            flagDict = {
+            'partner': '<:discord_partner:1042614097650389043>',
+            'staff': '<:Discord_Staff:1042614098711560202>',
+            'discord_certified_moderator': '<:Discord_certified_moderator:1042614096564068392>',
+            'hypesquad': '<:HypeSquad_Event:1042614104260628540>',
+            'hypesquad_balance': '<:HypeSquad_Balance:1042614100766752878>',
+            'hypesquad_bravery': '<:HypeSquad_Bravery:1042614101857275964>',
+            'hypesquad_brilliance': '<:HypeSquad_Brilliance:1042614103161704468>',
+            'bug_hunter': '<:Bug_Hunter:1042614093812596837>',
+            'bug_hunter_level_2': '<:Bug_Hunter_level2:1042614094940880997>',
+            'early_verified_bot_developer': '<:Verified_Bot_Developer:1042614106491998208>',
+            'early_supporter': '<:early_supporter:1042614099449757728>',
+            'nitro': '<:nitro:1042614105401471087>',
+            'verified_bot': '<:verified_bot_p1:1042615562636886076><:verified_bot_p2:1042615563693850665>'
+            }
+            userFlags = []
+            badges = ''
+            for flag in flags:
+                if getattr(user.public_flags, flag):
+                    userFlags.append(flag)
+                    badges += flagDict[flag]
+            embed = discord.Embed(title=f'{user}\'s profile', description=f'', color=0x202225)
+            # begin activity section
+            #
+            # end activities
+            embed.add_field(name='Badges', value=badges, inline=False)
+            embed.add_field(name='User ID', value=f'{user.id}', inline=False)
+            embed.add_field(name='Joined Discord', value=f'<t:{int(user.created_at.timestamp())}:R>', inline=False)
+
             try:
-                bannerURL = pUser.banner.url
-                proEmbed.set_image(url=bannerURL)
+                embed.set_image(url=user.banner.url)
+                bannerState = 0
             except AttributeError:
-                accentC = pUser.accent_color
-                if accentC == None:
-                    bannerURL = ''
+                if user.accent_color == None:
+                    bannerState = 1
                 else:
-                    bannerURL = f'https://singlecolorimage.com/get/' + str(accentC).replace('#', '') + '/600x240'
-            pfpURL = user.display_avatar.url
-            print(user.activities)
-            try:
-                actEmo1 = user.activities[0].emoji
-            # 1st activity
-            except AttributeError:
-                actEmo1 = '\u200b'
-            except IndexError:
-                actEmo1 = '\u200b'
-            try:
-                actName1 = user.activities[0].name
-            except AttributeError:
-                actName1 = '\u200b'
-            except IndexError:
-                actName1 = '\u200b'
-            try:
-                actTypeDir = str(user.activities[0].type)
-            except AttributeError:
-                actTypeDir = ''
-            except IndexError:
-                actTypeDir = ''
-            if actTypeDir == 'ActivityType.playing':
-                proEmbed.add_field(name='Playing', value=f'{actName1}')
-            elif actTypeDir == 'ActivityType.custom':
-                if actName1 is None:
-                    actName1 = ' '
-                if actEmo1 is None:
-                    actEmo1 = ' '
-                proEmbed.add_field(name='Custom Status', value=f'{actEmo1} \u200b{actName1}')
-            elif actTypeDir == 'ActivityType.listening':
-                sText1 = f'**{actName1}**\n[{str(user.activities[0].title)}]({str(user.activities[0].track_url)}) - {str(user.activities[0].artist)}'
-                proEmbed.add_field(name='Listening to', value=f'{sText1}', inline=False)
-            elif actTypeDir == 'ActivityType.watching':
-                proEmbed.add_field(name='Watching', value=f'{actName1}')
-            elif actTypeDir == 'ActivityType.Streaming':
-                try:
-                    strmUrl = user.activities[0].url
-                except:
-                    strmUrl = ''
-                proEmbed.add_field(name='Streaming', value=f'[{actName1}]({strmUrl})')
-            else:
-                proEmbed.add_field(name='no activity', value=f'\u200b')
-            # 2nd activity
-            try:
-                actEmo2 = user.activities[1].emoji
-            except AttributeError:
-                actEmo2 = ''
-            except IndexError:
-                actEmo2 = ''
-            try:
-                actName2 = user.activities[1].name
-            except AttributeError:
-                actName2 = '\u200b'
-            except IndexError:
-                actName2 = '\u200b'
-            try:
-                actTypeDir = str(user.activities[1].type)
-            except AttributeError:
-                actTypeDir = ''
-            except IndexError:
-                actTypeDir = ''
-            if actTypeDir == 'ActivityType.playing':
-                proEmbed.add_field(name='Playing', value=f'{actName2}', inline=False)
-            elif actTypeDir == 'ActivityType.custom':
-                if actName2 is None:
-                    actName2 = ' '
-                if actEmo2 is None:
-                    actEmo2 = ' '
-                proEmbed.add_field(name='Custom Status', value=f'{actEmo2} \u200b{actName2}', inline=False)
-            elif actTypeDir == 'ActivityType.listening':
-                sText2 = f'**{actName2}**\n[{str(user.activities[1].title)}]({str(user.activities[1].track_url)}) - {str(user.activities[1].artist)}'
-                proEmbed.add_field(name='Listening to', value=f'{sText2}', inline=False)
-            elif actTypeDir == 'ActivityType.watching':
-                proEmbed.add_field(name='Watching', value=f'{actName2}', inline=False)
-            elif actTypeDir == 'ActivityType.Streaming':
-                try:
-                    strmUrl2 = user.activities[0].url
-                except:
-                    strmUrl2 = ''
-                proEmbed.add_field(name='Streaming', value=f'[{actName2}]({strmUrl2})', inline=False)
-            else:
-                pass
-            proEmbed.add_field(name='Joined Discord', value=f'<t:{int(user.created_at.timestamp())}:R>', inline=False)
-            proEmbed.set_image(url=bannerURL)
-            proEmbed.set_thumbnail(url=pfpURL)
-            proEmbed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}'),
-            await ctx.respond(embed=proEmbed)
+                    embed.set_image(url=f'https://singlecolorimage.com/get/' + str(user.accent_color).replace('#', '') + '/600x240')
+                    bannerState = 2
+            if bannerState == 0:
+                embed.add_field(name='Banner', value='\u200b')
+            elif bannerState == 1:
+                embed.add_field(name='Banner', value='**No banner found!**')
+            elif bannerState == 2:
+                embed.add_field(name='Banner', value='\u200b')
+            #embed.set_image(url=bannerURL)
+            embed.set_thumbnail(url=user.display_avatar.url)
+            embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}'),
+            await ctx.respond(embed=embed)
+        elif command == 'flags':
+            if user == None:
+                user = ctx.author
+            flags = [ 'partner', 'staff', 'discord_certified_moderator', 'hypesquad', 'hypesquad_balance', 
+            'hypesquad_bravery', 'hypesquad_brilliance', 'bug_hunter', 'bug_hunter_level_2',
+            #this is where active dev would go
+            'early_verified_bot_developer', 'early_supporter', 'verified_bot']
+            flagDict = {
+            'partner': '<:discord_partner:1042614097650389043>',
+            'staff': '<:Discord_Staff:1042614098711560202>',
+            'discord_certified_moderator': '<:Discord_certified_moderator:1042614096564068392>',
+            'hypesquad': '<:HypeSquad_Event:1042614104260628540>',
+            'hypesquad_balance': '<:HypeSquad_Balance:1042614100766752878>',
+            'hypesquad_bravery': '<:HypeSquad_Bravery:1042614101857275964>',
+            'hypesquad_brilliance': '<:HypeSquad_Brilliance:1042614103161704468>',
+            'bug_hunter': '<:Bug_Hunter:1042614093812596837>',
+            'bug_hunter_level_2': '<:Bug_Hunter_level2:1042614094940880997>',
+            'early_verified_bot_developer': '<:Verified_Bot_Developer:1042614106491998208>',
+            'early_supporter': '<:early_supporter:1042614099449757728>',
+            'nitro': '<:nitro:1042614105401471087>',
+            'verified_bot': '<:verified_bot_p1:1042615562636886076><:verified_bot_p2:1042615563693850665>'
+            }
+            userFlags = []
+            badges = ''
+            for flag in flags:
+                if getattr(user.public_flags, flag):
+                    userFlags.append(flag)
+                    badges += flagDict[flag]
+            await ctx.respond(str(userFlags) + '\n' + badges)
         else:
             await ctx.respond(
-'Welcome, **poppy**!\n\
+f'Welcome, **poppy**!\n\
 cmds:```topmember - get largest guild egirl is present in\n\
 keegan - keegmand\n\
 profile - get prof of user (test of </profile:0>\n\
-banner - get banner of user (test of </banner:0>)```', ephemeral=True)
+banner - get banner of user (test of </banner:0>)\n\
+flags - \n\
+gcount - number of servers {bot.user.name} is in\
+```', ephemeral=True)
     else:
         await ctx.respond('nope', ephemeral=True)
 
@@ -1368,4 +1408,254 @@ async def _jortsweather(ctx, city: Option(str, 'city to find weather for', reqir
             await ctx.respond('City not found! ❌', ephemeral=True)
     else:
         await ctx.respond('something went wrong! use </reportissue:0> ❌', ephemeral=True)
+
+@bot.slash_command(name='passwordgenerator', description='generate a pseudo-random password')
+async def _passwordgenerator(ctx, length: Option(int, 'length of password', reqired=True)):
+    if length > 100:
+        await ctx.respond('Password cannot be over 100 characters! ❌', ephemeral=True)
+        return
+    ascii_letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    special_characters = '*_@-!.'
+    i = 0
+    r = ''
+    while i < length + 1:
+        c = random.randint(0,2)
+        if c == 0:
+            r += random.choice(ascii_letters)
+        elif c == 1:
+            r += str(random.randint(0, 9))
+        elif c == 2:
+            r += random.choice(special_characters)
+        i += 1
+
+    embed = discord.Embed(title=f'egirl\'s Password Generator', description=f'Generated password: `{r}`', color=0x202225)
+    embed.set_author(name='egirl will never store your password')
+    embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+    await ctx.respond('`'+r+'`', embed=embed, ephemeral=True)
+
+@bot.slash_command(name='profile', description='get the profile of a user')
+async def _profile(ctx, user: Option(discord.Member, 'user to get profile for', required=False)):
+    if user == None:
+        user = ctx.author
+    user = await bot.fetch_user(user.id)
+    flags = ['partner', 'staff', 'discord_certified_moderator', 'hypesquad', 'hypesquad_balance', 
+    'hypesquad_bravery', 'hypesquad_brilliance', 'bug_hunter', 'bug_hunter_level_2',
+    #this is where active dev would go
+    'early_verified_bot_developer', 'early_supporter', 'verified_bot']
+    flagDict = {
+    'partner': '<:discord_partner:1042614097650389043>',
+    'staff': '<:Discord_Staff:1042614098711560202>',
+    'discord_certified_moderator': '<:Discord_certified_moderator:1042614096564068392>',
+    'hypesquad': '<:HypeSquad_Event:1042614104260628540>',
+    'hypesquad_balance': '<:HypeSquad_Balance:1042614100766752878>',
+    'hypesquad_bravery': '<:HypeSquad_Bravery:1042614101857275964>',
+    'hypesquad_brilliance': '<:HypeSquad_Brilliance:1042614103161704468>',
+    'bug_hunter': '<:Bug_Hunter:1042614093812596837>',
+    'bug_hunter_level_2': '<:Bug_Hunter_level2:1042614094940880997>',
+    'early_verified_bot_developer': '<:Verified_Bot_Developer:1042614106491998208>',
+    'early_supporter': '<:early_supporter:1042614099449757728>',
+    'nitro': '<:nitro:1042614105401471087>',
+    'verified_bot': '<:verified_bot_p1:1042615562636886076><:verified_bot_p2:1042615563693850665>'
+    }
+    userFlags = []
+    badges = ''
+    for flag in flags:
+        if getattr(user.public_flags, flag):
+            userFlags.append(flag)
+            badges += flagDict[flag]+' '
+    if user.id == reportManager:
+        t = f'{user}\'s profile <:Server_Owner:1042685056277299220> <:Verified_Bot_Developer:1042614106491998208> <:Active_Developer:1042686286001090621>'
+    else:
+        t = f'{user}\'s profile'
+    embed = discord.Embed(title=t, description='', color=0x202225)
+    # begin activity section
+    #
+    # end activities
+    if badges != '':
+        embed.add_field(name='Badges', value=badges, inline=False)
+    embed.add_field(name='User ID', value=f'{user.id}', inline=False)
+    embed.add_field(name='Joined Discord', value=f'<t:{int(user.created_at.timestamp())}:R>', inline=False)
+    try:
+        embed.set_image(url=user.banner.url)
+        bannerState = 0
+    except AttributeError:
+        if user.accent_color == None:
+            bannerState = 1
+        else:
+            embed.set_image(url=f'https://singlecolorimage.com/get/' + str(user.accent_color).replace('#', '') + '/600x240')
+            bannerState = 2
+    if bannerState == 0:
+        if '.gif' in user.banner.url:
+            v = 'GIF Banner'
+        elif '.png' in user.banner.url or '.jpg' in user.banner.url or '.webp' in user.banner.url:
+            v = 'Standard banner'
+        embed.add_field(name='Banner', value=v)
+    elif bannerState == 1:
+        embed.add_field(name='Banner', value='No banner found!')
+    elif bannerState == 2:
+        embed.add_field(name='Banner', value='Accent color')
+    embed.set_thumbnail(url=user.display_avatar.url)
+    embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+    await ctx.respond(embed=embed)
+
+nick = bot.create_group(
+    "nick", "nickname related commands"
+) 
+
+@nick.command(name='set', description='change the nickname of a user (or yourself)')
+async def _set(ctx, nickname: Option(str, 'new nickname', required=True), user: Option(discord.Member, 'user to change nickname of', required=False)):
+    try:
+        if user == None: user = ctx.author
+        if user == ctx.author:
+            if len(nickname) > 32:
+                await ctx.respond('Nickname must be 32 characters at most! ❌', ephemeral=True)
+                return
+            oldNick = user.nick
+            await user.edit(nick=nickname)
+            newNick = user.nick
+            embed = discord.Embed(title=f'{user}\'s Nickname Updated!', description=f'Old nickname: {oldNick}\nNew nickname: {newNick}', color=0x202225)
+            embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+            await ctx.respond(embed=embed)
+        else:
+            if ctx.author.guild_permissions.manage_nicknames:
+                if len(nickname) > 32:
+                    await ctx.respond('Nickname must be 32 characters at most! ❌', ephemeral=True)
+                    return
+                oldNick = user.nick
+                await user.edit(nick=nickname)
+                newNick = user.nick
+                embed = discord.Embed(title=f'{user}\'s Nickname Updated!', description=f'Old nickname: {oldNick}\nNew nickname: {newNick}', color=0x202225)
+                embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+                await ctx.respond(embed=embed)
+            else: await ctx.respond('This command requires the \'Manage Nicknames\' permission! ❌', ephemeral=True)
+    except Exception as e:
+        print(f"perms error when changing nick\nError: {e}")
+        await ctx.respond('Permissions error when changing nick! Is egirl is higher role than the user? ❌', ephemeral=True)
+
+@nick.command(name='reset', description='reset the nickname of a user (or yourself)')
+async def _reset(ctx, user: Option(discord.Member, 'user to reset nickname of', required=False)):
+    try:
+        if user == None: user = ctx.author
+        if user == ctx.author:
+            oldNick = user.nick
+            await user.edit(nick=None)
+            embed = discord.Embed(title=f'{user}\'s Nickname Reset!', description=f'Old nickname: {oldNick}\nNew name: {user.name}', color=0x202225)
+            embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+            await ctx.respond(embed=embed)
+        else:
+            if ctx.author.guild_permissions.manage_nicknames:
+                oldNick = user.nick
+                await user.edit(nick=None)
+                embed = discord.Embed(title=f'{user}\'s Nickname Reset!', description=f'Old nickname: {oldNick}\nNew name: {user.name}', color=0x202225)
+                embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+                await ctx.respond(embed=embed)
+            else: await ctx.respond('This command requires the \'Manage Nicknames\' permission! ❌', ephemeral=True)
+    except Exception as e:
+        print(f"perms error when resetting nick\nError: {e}")
+        await ctx.respond('Permissions error when resetting nick! Is egirl is higher role than the user? ❌', ephemeral=True)
+
+@bot.slash_command(name='flip', description='flip a coin, with optional suspense!')
+async def _flip(ctx, suspense: Option(bool, 'toggle suspense', required=False, default=False)):
+    res = random.choice(['**heads**', '**tails**'])
+    if suspense:
+        embed = discord.Embed(title=f'egirl\'s Coin Flip', description='Flipping a coin... <a:coin:1043963826325958737>', color=0x202225)
+        await ctx.response.send_message(embed=embed)
+        embed = discord.Embed(title=f'egirl\'s Coin Flip', description='Hang on... <a:coin:1043963826325958737>', color=0x202225)
+        await asyncio.sleep(2)
+        await ctx.edit(embed=embed)
+        embed = discord.Embed(title=f'egirl\'s Coin Flip', description='It\'s.. It\'s... <a:coin:1043963826325958737>', color=0x202225)
+        await asyncio.sleep(2)
+        await ctx.edit(embed=embed)
+        embed = discord.Embed(title=f'egirl\'s Coin Flip', description=f'It\'s {res.upper()}!! <a:coin:1043963826325958737>', color=0x202225)
+        await asyncio.sleep(2)
+        await ctx.edit(embed=embed)
+    elif suspense == False:
+        embed = discord.Embed(title=f'egirl\'s Coin Flip', description=f'It\'s {res.upper()}!! <a:coin:1043963826325958737>', color=0x202225)
+        await ctx.response.send_message(embed=embed)
+
+@bot.slash_command(name='formatting', description='help with discord\'s formatting syntax')
+async def _formatting(ctx):
+    embed = discord.Embed(title=f'egirl\'s Formatting (Markdown) Syntax Help', description=f'Formatting is placed on either side of the desired text, like *this*. \
+    Some formatting (notably italics and bolding) can be combined to make new formatting, like ***this***, which results in bold and italic text (this). \
+    Formatting doesn\'t apply in codeblocks or when escaped with a backslash (*See, I\'m not formatted!*, \*Me either!\*).', color=0x202225)
+    embed.add_field(name='Syntax', value='Double Underscore: \_\_underline\_\_  __text__\n\
+    Single Asterisk: \*italics\* *text*\n\
+    Double Asterisk: \**bold\** **text**\n\
+    Double Tilde: \~~strikethrough\~~ ~~text~~\n\
+    Single Backtick: \`single line codeblock\` `text`\n\
+    Greater Than: > Quote\n\
+    > text\n\
+    Triple Backtick: \`\`\`multi line codeblock\`\`\` \n\
+    ```text```', inline=False)
+    #embed.set_thumbnail(url='https://raw.githubusercontent.com/ignpoppyseed/ignpoppyseed/main/img/mdW2.png')
+    #embed.set_thumbnail(url='https://raw.githubusercontent.com/ignpoppyseed/ignpoppyseed/main/img/mdB2.png')
+    embed.add_field(name='Helpful Resources', value='[Official Discord Formatting Guide](https://support.discord.com/hc/en-us/articles/210298617-Markdown-Text-101-Chat-Formatting-Bold-Italic-Underline-)\n\
+        [matthewzring\'s Guide With Nice Examples!](https://gist.github.com/matthewzring/9f7bbfd102003963f9be7dbcf7d40e51)', inline=False)
+    await ctx.respond(embed=embed)
+
+roll = bot.create_group(
+    "roll", "dice rolling commands"
+) 
+
+@roll.command(name='expression', description='roll a dice!')
+async def _expression(ctx, expression: Option(str, 'the expression to roll', required=True), hidden: Option(bool, 'have the result hidden from other users', required=False, default=False)):
+    if hidden == True:
+        eph = True
+    else:
+        eph = False
+    await ctx.defer(ephemeral=eph)
+    try:
+        roll = dice.roll(expression)
+    except dice.exceptions.DiceException:
+        embed = discord.Embed(title=f'egirl\'s Dice Roller', description=f'Parsing Error! Your expression **{expression}** was unable to be parsed! Try the </roll help:0> command for help!', color=0x202225)
+        await ctx.respond(embed=embed, ephemeral=eph)
+        return
+    res = ''
+    if type(roll) == dice.elements.Roll:
+        i = 1
+        for f in roll:
+            res += '**Die '+str(i)+'**: '+str(f)+'\n'
+            i += 1
+    elif type(roll) == dice.elements.Integer: res += '**Die 1**: '+str(roll)
+    embed = discord.Embed(title=f'egirl\'s Dice Roller', description=res, color=0x202225)
+    try:
+        await ctx.respond(embed=embed, ephemeral=eph)
+    except:
+        embed = discord.Embed(title=f'egirl\'s Dice Roller', description=f'Parsing Error! Your expression **{expression}** resulted in a response that was too long! Try the </roll help:0> command for help!', color=0x202225)
+        await ctx.respond(embed=embed, ephemeral=eph)
+
+@roll.command(name='help', description='dice rolling help')
+async def _rollhelp(ctx):
+    embed = discord.Embed(title=f'egirl\'s Dice Roller Help', description=f'The documentation for the expression parser is [here](https://pypi.org/project/dice/), in the notation section. However, you may find a summary of the basics below.', color=0x202225)
+    embed.add_field(name='Examples', value=f'**4d6**: Rolls 4 die with 6 sides.\n\n\
+        **4d6t**: Rolls 4 die with 6 sides and returns the total(t) of those rolls.\n\n\
+        **4d6 .+ 1**: Rolls 4 die with 6 sides and adds 1 to each roll (so a roll of 3 would become 4)\n\n\
+        **4d6 .- 1**: Rolls 4 die with 6 sides and subtracts 1 from each roll (so a roll of 3 would become 2)', inline=False)
+    await ctx.respond(embed=embed)
+
+@bot.slash_command(name='resources', description='resources used for/by egirl!')
+async def _resources(ctx):
+    embed = discord.Embed(title=f'egirl\'s Resource List', description=f'A list of resources used by poppy#0001 for egirl\'s development!', color=0x202225)
+    embed.add_field(name='Documentation and Help', value=f'[Discord.js](https://discord.js.org/#/docs/discord.js/main/general/welcome)\n\
+        [PyCord](https://docs.pycord.dev/en/stable/)\n\
+        [StackOverflow](https://stackoverflow.com/)', inline=False)
+    embed.add_field(name='APIs', value=f'[cloverbrandAPI](https://api.cloverbrand.xyz/)\n\
+        [DBot API](https://api.dbot.dev/endpoints)\n\
+        [OpenWeatherMap API](https://openweathermap.org/api)\n\
+        [NekoBot API](https://docs.nekobot.xyz/)\n\
+        [Animated Story Titles](https://animatedstorytitles.com/)\n\
+        [ChilliHero QOTD](https://chillihero.api.stdlib.com/qotd@0.1.3/question/)\n\
+        [dog.ceo API](https://dog.ceo/api)\n\
+        [The Cat API](https://thecatapi.com/)\n\
+        [Hypixel API](https://api.hypixel.net/)\n\
+        [Mojang API](https://api.mojang.com)\n', inline=False)
+    embed.add_field(name='How to Start', value=f'Remember: Anyone can program something! Here\'s a few resources to help you begin!\n\
+        [Repl.it](https://replit.com/) - A useful tool to run code online (which even works on phones!)\n\
+        [W3Schools](https://www.w3schools.com/) - Free online courses for coding\n\
+        [Code With Swastik](https://www.youtube.com/@CodeWithSwastik) - Fantastic PyCord/discord.py video tutorials\n\
+        [Worn Off Keys](https://www.youtube.com/@WornOffKeys) - Fantastic discord.js video tutorials\n\
+        ', inline=False)
+    await ctx.respond(embed=embed)
+
+bootstart = time.time()
 bot.run(TOKEN)
