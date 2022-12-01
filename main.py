@@ -34,7 +34,7 @@ bot = discord.AutoShardedBot(case_insensitive=True, command_prefix=";", intents=
 bot.topggpy = topgg.DBLClient(bot, topggToken)
 
 debugMode = False
-egirlVersion = '1.20.1'
+egirlVersion = '1.21'
 loggingChannel = 994443884878901378
 reportManager = 402569003903483904
 
@@ -159,7 +159,7 @@ async def stat_task():
     await asyncio.sleep(30)
     await bot.change_presence(status=discord.Status.online, activity=discord.Game('#girlboss'))
     await asyncio.sleep(30)
-    await bot.change_presence(status=discord.Status.online, activity=discord.Activity(type=discord.ActivityType.listening, name="to egirl asmr"))
+    await bot.change_presence(status=discord.Status.online, activity=discord.Activity(type=discord.ActivityType.listening, name="egirl asmr"))
     await asyncio.sleep(30)
     await bot.change_presence(status=discord.Status.online, activity=discord.Activity(type=discord.ActivityType.competing, name="egirl contests?"))
     await asyncio.sleep(30)
@@ -1108,7 +1108,7 @@ async def _nuke(ctx,
 async def _kick(ctx, member: Option(discord.Member, 'choose member to kick', required=True), reason: Option(str, 'reason displayed in audit log', required=True)):
     if ctx.author.guild_permissions.administrator:
         try:
-            await member.kick(reason=reason, delete_message_seconds=None, delete_message_days=None)
+            await member.kick(reason=reason)
             await ctx.respond(f'**{member}** was kicked! ✅', ephemeral=True)
         except:
             await ctx.respond(f'Failed to kick **{member}**, is their role higher than egirl\'s? Are they in the server? ❌', ephemeral=True)

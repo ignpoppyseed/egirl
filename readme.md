@@ -1,5 +1,9 @@
 # **egirl is more than just a multipurpose bot, she's a friend!**
 
+<a href="https://top.gg/bot/825415772075196427">
+  <img src="https://top.gg/api/widget/servers/825415772075196427.svg?noavatar=true">
+</a>
+
 ## **reasons why you need egirl:**
 
 **premium and consistent feel:** egirl is developed with details and communities in mind and always looks her sharpest.
