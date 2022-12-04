@@ -1,22 +1,12 @@
-import asyncio
-import glob
-import json
-import math
-import os
-import random
-import time
-import dice
+import asyncio, glob, json, math, os, random, time, dice, aiohttp, discord, requests, topgg, pyttsx3, string
 from io import BytesIO
-
-import aiohttp
-import discord
-import requests
-import topgg
 from discord import Option, OptionChoice
 from discord.ui import Button, View
 from discord.ext import tasks
 from dotenv import load_dotenv
 from PIL import Image, ImageDraw, ImageFont
+
+#fix pw generator
 
 load_dotenv()
 TOKEN = os.getenv('TOKEN')
@@ -25,18 +15,18 @@ topggToken = os.getenv('TOPGGTOKEN')
 booksToken = os.getenv('GOOGLE_BOOKS')
 weatherToken = os.getenv('OPENWEATHER')
 
-intents = discord.Intents.default()
-intents.guilds = True
-intents.members = True
+intents = discord.Intents.all()
 
-bot = discord.AutoShardedBot(case_insensitive=True, command_prefix=";", intents=intents, activity=discord.Activity(type=discord.ActivityType.watching, name="connecting to api"), status=discord.Status.online)
+bot = discord.AutoShardedBot(case_insensitive=True, command_prefix=";", intents=intents, activity=discord.Activity(type=discord.ActivityType.watching, name="connecting to api,,,"), status=discord.Status.idle)
 
 bot.topggpy = topgg.DBLClient(bot, topggToken)
 
 debugMode = False
-egirlVersion = '1.21'
+egirlVersion = '1.22'
 loggingChannel = 994443884878901378
 reportManager = 402569003903483904
+reportManagerName = 'poppy#0001'
+roleplay_api = 'https://api.dbot.dev/images/'
 
 reportLock = []
 
@@ -54,6 +44,7 @@ async def on_ready():
     pfp_task.start()
     stat_task.start()
     topggStats.start()
+    #reportManagerObject = await bot.get_user(reportManager)
 
 
 def get_welcome_channel(guildID):
@@ -76,8 +67,30 @@ def get_uwu_state(guildID):
 
 @bot.event
 async def on_message(message):
-    if message.author == bot.user: 
+    if message.author.bot: 
         return
+    if message.mentions:
+        ii = []
+        for i in message.mentions:
+            ii.append(i.id)
+        if bot.user.id in ii:
+            egirlEmbed = discord.Embed(title='about egirl', url='https://cloverbrand.xyz/egirl/', color=0x202225)
+            egirlEmbed.add_field(name=f'running egirl v{egirlVersion}', value=
+                f'**[invite !](https://cloverbrand.xyz/egirl/invite/)** | **[website !](https://cloverbrand.xyz)** | **[vote !](https://top.gg/bot/825415772075196427/vote)**\n\
+                egirl is constantly being updated!\n\
+                if you have an issue, contact the developer @ poppy#0001 or egirl@cloverbrand.xyz\n\
+                egirl\'s pronouns are she/her',inline=False)
+            tip = [
+                '**tip:** egirl\'s profile picture changes every 10 minutes!',
+                '**tip:** some egirl commands can only be accessed by poppy, ask her to show you!',
+                '**tip:** invite egirl\'s best friend, catgirl @ https://bot.cloverbrand.xyz!',
+                '**tip:** schedule regular veterinary visits for your pets!',
+                '**fact:** trans rights are human rights!',
+                '**fact:** egirl\'s favorite color is \#202225'
+            ]
+            egirlEmbed.add_field(name=f'extra', value=f'{tip[random.randrange(0, len(tip))]}', inline=False)
+            egirlEmbed.set_footer(text=f'requested by {message.author}', icon_url=f'{message.author.avatar.url}'),
+            await message.reply(embed=egirlEmbed, mention_author=False)
     try:
         if get_uwu_state(message.guild.id) == 'on':
             if random.randrange(0, 20+1) == 5:
@@ -627,62 +640,105 @@ async def _8ball(ctx, question: Option(str, "yes or no question", required=True)
         Embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}'),
         await ctx.respond(embed=Embed)
 
-@bot.slash_command(
-    name='rp',
-    description='show your love or beat people up!'
-)
-async def _rp(ctx, 
-    action: Option(str, 'choose gif', choices = [
-        OptionChoice(name='punch', value='punch'), 
-        OptionChoice(name='hug', value='hug'), 
-        OptionChoice(name='poke', value='poke'),
-        OptionChoice(name='tickle', value='tickle'),
-        OptionChoice(name='lick', value='lick'),
-        OptionChoice(name='kiss', value='kiss'),
-        OptionChoice(name='nom', value='nom'),
-        OptionChoice(name='pat', value='pat'),
-        OptionChoice(name='slap', value='slap'),
-        ], required=True), 
-    user: Option(discord.Member, 'user to affect', required=True)):
-    actionURL = action
-    if action == 'punch':
-        action = action + 'es'
-    elif action == 'kiss':
-        action = action + 'es'
-    else: 
-        action = action + 's'
-    credEmbed = discord.Embed(title='', description=f'<@{ctx.author.id}> {action} <@{user.id}>!', color=0x202225)
-    credEmbed.set_image(url=requests.get(f'https://api.dbot.dev/images/{actionURL}').json()['url'])
-    credEmbed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
-    await ctx.respond(embed=credEmbed)
+roleplay = bot.create_group("rp", "roleplay cmds") 
 
-@bot.slash_command(
-    name='solorp',
-    description='fall asleep or look smug!'
-)
-async def _solorp(ctx, 
-    action: Option(str, 'choose gif', choices = [
-        OptionChoice(name='blush', value='blush'),
-        OptionChoice(name='cry', value='cry'), 
-        OptionChoice(name='pout', value='pout'),
-        OptionChoice(name='sleep', value='sleep'),
-        OptionChoice(name='smug', value='smug')
-        ], required=True)):
-    actionURL = action
-    if action == 'blush':
-        action = 'blushes'
-    elif action == 'cry':
-        action = 'cries'
-    elif action == 'pout':
-        action = 'pouts'
-    elif action == 'sleep':
-        action = 'goes to sleep'
-    elif action == 'smug':
-        action = 'acts smug'
-    credEmbed = discord.Embed(title='', description=f'<@{ctx.author.id}> {action}', color=0x202225)
-    credEmbed.set_image(url=requests.get(f'https://api.dbot.dev/images/{actionURL}').json()['url'])
-    credEmbed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
-    await ctx.respond(embed=credEmbed)
+@roleplay.command(name='punch', description='punch someone')
+async def _rp_punch(ctx, user: Option(discord.Member, 'user to punch', required=True)):
+    embed = discord.Embed(title='', description=f'<@{ctx.author.id}> punches <@{user.id}>!', color=0x202225)
+    embed.set_image(url=requests.get(f'{roleplay_api}punch').json()['url'])
+    embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+    await ctx.respond(embed=embed)
+
+@roleplay.command(name='hug', description='hug someone')
+async def _rp_hug(ctx, user: Option(discord.Member, 'user to hug', required=True)):
+    embed = discord.Embed(title='', description=f'<@{ctx.author.id}> hugs <@{user.id}>!', color=0x202225)
+    embed.set_image(url=requests.get(f'{roleplay_api}hug').json()['url'])
+    embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+    await ctx.respond(embed=embed)
+
+@roleplay.command(name='poke', description='poke someone')
+async def _rp_poke(ctx, user: Option(discord.Member, 'user to poke', required=True)):
+    embed = discord.Embed(title='', description=f'<@{ctx.author.id}> pokes <@{user.id}>!', color=0x202225)
+    embed.set_image(url=requests.get(f'{roleplay_api}poke').json()['url'])
+    embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+    await ctx.respond(embed=embed)
+
+@roleplay.command(name='tickle', description='tickle someone')
+async def _rp_tickle(ctx, user: Option(discord.Member, 'user to tickle', required=True)):
+    embed = discord.Embed(title='', description=f'<@{ctx.author.id}> tickles <@{user.id}>!', color=0x202225)
+    embed.set_image(url=requests.get(f'{roleplay_api}tickle').json()['url'])
+    embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+    await ctx.respond(embed=embed)
+
+@roleplay.command(name='lick', description='lick someone')
+async def _rp_lick(ctx, user: Option(discord.Member, 'user to lick', required=True)):
+    embed = discord.Embed(title='', description=f'<@{ctx.author.id}> licks <@{user.id}>!', color=0x202225)
+    embed.set_image(url=requests.get(f'{roleplay_api}lick').json()['url'])
+    embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+    await ctx.respond(embed=embed)
+
+@roleplay.command(name='kiss', description='kiss someone')
+async def _rp_kiss(ctx, user: Option(discord.Member, 'user to AAAA', required=True)):
+    embed = discord.Embed(title='', description=f'<@{ctx.author.id}> kisses <@{user.id}>!', color=0x202225)
+    embed.set_image(url=requests.get(f'{roleplay_api}kiss').json()['url'])
+    embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+    await ctx.respond(embed=embed)
+
+@roleplay.command(name='bite', description='bite someone')
+async def _rp_bite(ctx, user: Option(discord.Member, 'user to bite', required=True)):
+    embed = discord.Embed(title='', description=f'<@{ctx.author.id}> bites <@{user.id}>!', color=0x202225)
+    embed.set_image(url=requests.get(f'{roleplay_api}nom').json()['url'])
+    embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+    await ctx.respond(embed=embed)
+
+@roleplay.command(name='pat', description='pat someone')
+async def _rp_pat(ctx, user: Option(discord.Member, 'user to pat', required=True)):
+    embed = discord.Embed(title='', description=f'<@{ctx.author.id}> pats <@{user.id}>!', color=0x202225)
+    embed.set_image(url=requests.get(f'{roleplay_api}pat').json()['url'])
+    embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+    await ctx.respond(embed=embed)
+
+@roleplay.command(name='slap', description='slap someone')
+async def _rp_slap(ctx, user: Option(discord.Member, 'user to slap', required=True)):
+    embed = discord.Embed(title='', description=f'<@{ctx.author.id}> slap <@{user.id}>!', color=0x202225)
+    embed.set_image(url=requests.get(f'{roleplay_api}slap').json()['url'])
+    embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+    await ctx.respond(embed=embed)
+
+@roleplay.command(name='blush', description='blush')
+async def _rp_blush(ctx):
+    embed = discord.Embed(title='', description=f'<@{ctx.author.id}> blushes', color=0x202225)
+    embed.set_image(url=requests.get(f'{roleplay_api}blush').json()['url'])
+    embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+    await ctx.respond(embed=embed)
+
+@roleplay.command(name='cry', description='cry')
+async def _rp_cry(ctx):
+    embed = discord.Embed(title='', description=f'<@{ctx.author.id}> cries', color=0x202225)
+    embed.set_image(url=requests.get(f'{roleplay_api}cry').json()['url'])
+    embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+    await ctx.respond(embed=embed)
+
+@roleplay.command(name='pout', description='pout')
+async def _rp_pout(ctx):
+    embed = discord.Embed(title='', description=f'<@{ctx.author.id}> pouts', color=0x202225)
+    embed.set_image(url=requests.get(f'{roleplay_api}pout').json()['url'])
+    embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+    await ctx.respond(embed=embed)
+
+@roleplay.command(name='sleep', description='sleep')
+async def _rp_sleep(ctx):
+    embed = discord.Embed(title='', description=f'<@{ctx.author.id}> goes to sleep', color=0x202225)
+    embed.set_image(url=requests.get(f'{roleplay_api}sleep').json()['url'])
+    embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+    await ctx.respond(embed=embed)
+
+@roleplay.command(name='smug', description='smug')
+async def _rp_smug(ctx):
+    embed = discord.Embed(title='', description=f'<@{ctx.author.id}> looks smug', color=0x202225)
+    embed.set_image(url=requests.get(f'{roleplay_api}smug').json()['url'])
+    embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+    await ctx.respond(embed=embed)
 
 @bot.slash_command(
     name='rockpaperscissors',
@@ -910,142 +966,127 @@ async def _howboopable(ctx, user: Option(discord.Member, "choose who to check bo
     R = random.randrange(0, len(opt))
     embed = discord.Embed(title=f'How boopable is {user}?', description=opt[R], color=0x202225)
     embed.set_thumbnail(url=user.display_avatar.url)
-    embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}'),
+    embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
     await ctx.respond(embed=embed)
 
-@bot.slash_command(
-    name="tod",
-    description="truth or dare",
-)
-async def _tod(ctx, question: Option(str, 'choose between truth or dare', choices=[
-    OptionChoice(name='truth'), 
-    OptionChoice(name='dare'),
-    OptionChoice(name='Surprise Me!', value='surprise_me')
-    ], required=True),):
+@bot.slash_command(name="tod", description="truth or dare")
+async def _tod(ctx, type: Option(str, 'choose between truth or dare', choices=[
+    OptionChoice(name='Truth', value='truth'), 
+    OptionChoice(name='Dare', value='dare'),
+    OptionChoice(name='Surprise Me!', value='surprise_me')], required=True), 
+    rating: Option(str, 'choose rating of question', choices=[
+    OptionChoice(name='PG', value='pg'), 
+    OptionChoice(name='PG-13', value='pg13'),
+    OptionChoice(name='R', value='r')], required=False, default='pg13')):
+    async def tod(ctx, type: str, rating):
+        truth_button_V = Button(label='Truth', style=discord.ButtonStyle.green)
+        dare_button_V = Button(label='Dare', style=discord.ButtonStyle.red)
+        random_button_V = Button(label='Surprise Me!', style=discord.ButtonStyle.blurple)
 
-    truths = ['When was the last time you lied?',
-    'When was the last time you cried?',
-    'What\'s your biggest fear?',
-    'What\'s your biggest fantasy?',
-    'What\'s something you\'re glad your mum doesn\'t know about you?',
-    'What\'s the worst thing you\'ve ever done?',
-    'What\'s a secret you\'ve never told anyone?',
-    'Do you have a hidden talent?',
-    'Who was your first celebrity crush?',
-    'Have you ever cheated in an exam?',
-    'Have you ever broken the law?',
-    'What\'s your biggest insecurity?',
-    'What\'s the biggest mistake you\'ve ever made?',
-    'What\'s the most disgusting thing you\'ve ever done?',
-    'Who would you like to kiss right now?',
-    'What\'s the worst thing anyone\'s ever done to you?',
-    'What\'s your worst habit?',
-    'What\'s the worst thing you\'ve ever said to anyone?',
-    'What\'s the strangest dream you\'ve had?',
-    'What\'s the worst date you\'ve been on?',
-    'What\'s your biggest regret?',
-    'What\'s the biggest misconception about you?',
-    'Have you ever lied to get out of a bad date?',
-    'What\'s the most trouble you\'ve been in? ',
-    'What is a weird food that you love?',
-    'What terrible movie or show is your guilty pleasure?',
-    'What is the worst grade you received for a class in school/college?',
-    'What is the biggest lie you\'ve ever told?',
-    'Have you ever broken an expensive item?',
-    'What is one thing you\'d change about your appearance if you could?',
-    'If you suddenly had a million dollars, how would you spend it?',
-    'Who is the best teacher you\'ve ever had and why?',
-    'What is the worst food you\'ve ever tasted?',
-    'What is the weirdest way you\'ve met someone you now consider a close friend?',
-    'What is the most embarrassing thing you\'ve posted on social media?',
-    'Have you ever revealed a friend\'s secret to someone else?',
-    'If you could only eat one meal for the rest of your life, what would it be?',
-    'What is your favorite book of all time?',
-    'What is the last text message you sent your best friend?',
-    'What is something you would do if you knew there were no consequences?',
-    'What is the worst physical pain you\'ve ever been in?',
-    'Personality-wise, are you more like your mom or your dad?',
-    'When is the last time you apologized (and what did you do)?',
-    'If your house caught on fire and you could only save three things (besides people), what would they be?',
-    'If you could pick one other player to take with you to a deserted island, who would it be?',
-    'Have you ever stolen anything?',
-    'Have you ever been kicked out of a store, restaurant, bar, event, etc.?',
-    'What is the weirdest thing you\'ve ever done in public?',
-    'What is the last excuse you used to cancel plans?',
-    'What is the biggest mistake you\'ve ever made at school or work?',
-    'Which player would survive the longest in a horror/apocalypse movie, and who would be the first one to die?',
-    'What is the dirtiest room/area of your house?',
-    'Which of your family members annoys you the most?',
-    'When is the last time you made someone else cry?',
-    'What is the longest you\'ve ever gone without showering?',
-    'If you could pick anyone in the world to be president, who would you choose?',
-    'Do you pee in pools?',
-    'If someone went through your closet, what is the weirdest thing they\'d find?',
-    'Have you ever lied about your age?',
-    'Besides your phone, what\'s the one item in your house you couldn\'t live without?',
-    'What is the biggest fight you\'ve ever been in with a friend?']
+        async def truth_button(interaction):
+            try:
+                await interaction.response.edit_message(embed=embed, view=None)
+                await tod(ctx, 'truth', rating)
+            except discord.errors.NotFound: return
+        async def dare_button(interaction):
+            try:
+                await interaction.response.edit_message(embed=embed, view=None)
+                await tod(ctx, 'dare', rating)
+            except discord.errors.NotFound: return
+        async def random_button(interaction):
+            try:
+                await interaction.response.edit_message(embed=embed, view=None)
+                await tod(ctx, 'surprise_me', rating)
+            except discord.errors.NotFound: return
 
-    dares = ['Show the most embarrassing photo on your phone',
-    'Show the last five people you texted and what the messages said',
-    'Do 100 squats',
-    'Say something dirty to the person on your left',
-    'Yell out the first word that comes to your mind',
-    'Empty out your wallet/purse and show everyone what\'s inside',
-    'Try and make the group laugh as quickly as possible',
-    'Try to put your whole fist in your mouth',
-    'Tell everyone an embarrassing story about yourself',
-    'Try to lick your elbow',
-    'Read the last text message you sent out loud.',
-    'Show the weirdest item you have in your purse/pockets.',
-    'Speak in an Australian accent until your next turn.',
-    'Narrate the game in a newscaster voice for three turns.',
-    'Show the most embarrassing photo on your phone.',
-    'Meow.',
-    'Nya. ',
-    'Talk like an anime girl until your next turn',
-    'Show the group your internet search history.',
-    'Let another player choose your status.',
-    'Do an impression of another player until someone can figure out who it is.',
-    'Act like a chicken until your next turn.',
-    'Eat a packet of hot sauce or ketchup straight.',
-    'Spin around 12 times and try to walk straight. ',
-    'Pretend to be a squirrel until your next turn.',
-    'Quack like a duck until your next turn.',
-    'Sing the national anthem in a British accent.',
-    'Talk in a surfer voice until your next turn',
-    'Read out the last dirty text you sent',
-    'Pretend to be a food item of your choice',
-    'Show the group your screen time report',
-    'Keep three ice cubes in your mouth until they melt',
-    'Keep your eyes closed until it\'s your turn again',
-    'Whisper a secret to the person on your left',
-    'Scroll through your contacts until someone says stop. You either have to call or delete that person.',
-    'Tell the group two truths and a lie, and they have to guess which one the lie is',
-    'Smile as widely as you can and hold it for two minutes',
-    'Sit on the floor for the rest of the evening',
-    'Put on make-up without a mirror and leave it like that for the rest of the game',
-    'Give a personalised insult to everyone in the room',
-    'For the next 10 minutes, every time someone asks you something, respond with a bark',
-    'Let the person next to you wax you wherever they want']
+        async def on_timeout():
+            try:
+                view.disable_all_items()
+                truth_button.label = 'Timed Out'
+                dare_button.label = 'Timed Out'
+                random_button.label = 'Timed Out'
+                await ctx.edit(view=view)
+            except: return
+        
+        view = View(timeout=180, disable_on_timeout=True)
+        view.add_item(truth_button_V)
+        view.add_item(dare_button_V)
+        view.add_item(random_button_V)
+        truth_button_V.callback = truth_button
+        dare_button_V.callback = dare_button
+        random_button_V.callback = random_button
+        view.on_timeout = on_timeout
 
-    if question == 'truth':
-        qod = truths[random.randrange(0, len(truths))]
-        qodB = 'Truth: '
-    elif question == 'dare':
-        qod = dares[random.randrange(0, len(dares))]     
-        qodB = 'Dare: '   
-    elif question == 'surprise_me': 
-        rng = random.randrange(0, 1)
-        if rng == 0: 
-            qod = truths[random.randrange(0, len(truths))]
-            qodB = 'Truth: '
-        elif rng == 1:
-            qod = dares[random.randrange(0, len(dares))]
-            qodB = 'Dare: '  
+        if type == 'surprise_me': type = random.choice(['truth', 'dare'])
 
-    embed = discord.Embed(title=f'egirl\'s Truth or Dare', description=f'{qodB}{qod}', color=0x202225)
-    embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}'),
-    await ctx.respond(embed=embed)
+        todr = requests.get(f'https://api.truthordarebot.xyz/v1/{type}?rating={rating}').json()['question']
+
+        embed = discord.Embed(title=f'Truth or Dare', description=todr, color=0x202225)
+        embed.set_footer(text=f'{bot.user.name} • ©{reportManagerName} • Rating: {rating} • Type: {string.capwords(type)}', icon_url=f'{bot.user.avatar.url}')
+        await ctx.respond(embed=embed, view=view)
+    await tod(ctx, type, rating)
+
+@bot.slash_command(name="wyr", description='would you rather')
+async def _wyr(ctx, rating: Option(str, 'choose rating of question', choices=[
+    OptionChoice(name='PG', value='pg'), 
+    OptionChoice(name='PG-13', value='pg13'),
+    OptionChoice(name='R', value='r')], required=False, default='pg13')):
+    async def wyr(ctx, rating):
+        next_button = Button(label='Next', style=discord.ButtonStyle.green)
+
+        async def next_button_f(interaction):
+            try:
+                await interaction.response.edit_message(embed=embed, view=None)
+                await wyr(ctx, rating)
+            except discord.errors.NotFound: return
+
+        async def on_timeout():
+            try:
+                view.disable_all_items()
+                next_button.label = 'Timed Out'
+                await ctx.edit(view=view)
+            except: return
+        
+        view = View(timeout=180, disable_on_timeout=True)
+        view.add_item(next_button)
+        next_button.callback = next_button_f
+        wyrr = requests.get(f'https://api.truthordarebot.xyz/api/wyr?rating={rating}').json()['question'][17:].capitalize()
+
+        embed = discord.Embed(title=f'Would you Rather', description=wyrr, color=0x202225)
+        embed.set_footer(text=f'{bot.user.name} • ©{reportManagerName} • Rating: {rating}', icon_url=f'{bot.user.avatar.url}')
+        await ctx.respond(embed=embed, view=view)
+    await wyr(ctx, rating)
+
+@bot.slash_command(name="nhie", description='never have I ever')
+async def _nhie(ctx, rating: Option(str, 'choose rating of question', choices=[
+    OptionChoice(name='PG', value='pg'), 
+    OptionChoice(name='PG-13', value='pg13'),
+    OptionChoice(name='R', value='r')], required=False, default='pg13')):
+    async def nhie(ctx, rating):
+        next_button = Button(label='Next', style=discord.ButtonStyle.green)
+
+        async def next_button_f(interaction):
+            try:
+                await interaction.response.edit_message(embed=embed, view=None)
+                await nhie(ctx, rating)
+            except discord.errors.NotFound: return
+
+        async def on_timeout():
+            try:
+                view.disable_all_items()
+                next_button.label = 'Timed Out'
+                await ctx.edit(view=view)
+            except: return
+        
+        view = View(timeout=180, disable_on_timeout=True)
+        view.add_item(next_button)
+        next_button.callback = next_button_f
+        nhier = requests.get(f'https://api.truthordarebot.xyz/api/nhie?rating={rating}').json()['question']
+
+        embed = discord.Embed(title=f'Never Have I Ever', description=nhier, color=0x202225)
+        embed.set_footer(text=f'{bot.user.name} • ©{reportManagerName} • Rating: {rating}', icon_url=f'{bot.user.avatar.url}')
+        await ctx.respond(embed=embed, view=view)
+    await nhie(ctx, rating)
 
 @bot.slash_command(name='uwuifier', description='uwuify some text')
 async def _uwuifier(ctx, text: Option(str, 'text to uwuify', required=True), send_as_user: Option(bool, 'send message as clone of user', required=False, default=True)):
@@ -1418,7 +1459,7 @@ async def _passwordgenerator(ctx, length: Option(int, 'length of password', reqi
     special_characters = '*_@-!.'
     i = 0
     r = ''
-    while i < length + 1:
+    while i < length:
         c = random.randint(0,2)
         if c == 0:
             r += random.choice(ascii_letters)
@@ -1435,6 +1476,7 @@ async def _passwordgenerator(ctx, length: Option(int, 'length of password', reqi
 
 @bot.slash_command(name='profile', description='get the profile of a user')
 async def _profile(ctx, user: Option(discord.Member, 'user to get profile for', required=False)):
+    await ctx.defer()
     if user == None:
         user = ctx.author
     user = await bot.fetch_user(user.id)
@@ -1467,12 +1509,22 @@ async def _profile(ctx, user: Option(discord.Member, 'user to get profile for', 
         t = f'{user}\'s profile <:Server_Owner:1042685056277299220> <:Verified_Bot_Developer:1042614106491998208> <:Active_Developer:1042686286001090621>'
     else:
         t = f'{user}\'s profile'
+
     embed = discord.Embed(title=t, description='', color=0x202225)
-    # begin activity section
-    #
-    # end activities
     if badges != '':
         embed.add_field(name='Badges', value=badges, inline=False)
+    try:
+        act_user = ctx.guild.get_member(user.id)
+        for activity in act_user.activities:
+            type = str(activity.type).split('.')[1].capitalize()
+            if type.lower() == 'custom': embed.add_field(name='Custom Status', value=f'{activity}', inline=False)
+            elif type.lower() == 'listening': embed.add_field(name='Listening to', value=f'[{str(activity.title)}]({str(activity.track_url)}) - {str(activity.artist)}', inline=False)
+            elif type.lower() == 'playing': embed.add_field(name='Playing', value=f'{activity.name}', inline=False)
+            elif type.lower() == 'streaming': embed.add_field(name='Streaming', value=f'[{activity.name}]({activity.url})', inline=False)
+            elif type.lower() == 'watching': embed.add_field(name='Watching', value=f'[{activity.name}]({activity.url})', inline=False)
+            else: embed.add_field(name='Unknown Status Type', value=activity.name, inline=False)
+    except Exception as e: embed.add_field(name='Custom Status', value=f'No activity available!', inline=False)
+
     embed.add_field(name='User ID', value=f'{user.id}', inline=False)
     embed.add_field(name='Joined Discord', value=f'<t:{int(user.created_at.timestamp())}:R>', inline=False)
     try:
@@ -1498,9 +1550,7 @@ async def _profile(ctx, user: Option(discord.Member, 'user to get profile for', 
     embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
     await ctx.respond(embed=embed)
 
-nick = bot.create_group(
-    "nick", "nickname related commands"
-) 
+nick = bot.create_group("nick", "nickname related commands") 
 
 @nick.command(name='set', description='change the nickname of a user (or yourself)')
 async def _set(ctx, nickname: Option(str, 'new nickname', required=True), user: Option(discord.Member, 'user to change nickname of', required=False)):
@@ -1656,6 +1706,37 @@ async def _resources(ctx):
         [Worn Off Keys](https://www.youtube.com/@WornOffKeys) - Fantastic discord.js video tutorials\n\
         ', inline=False)
     await ctx.respond(embed=embed)
+
+ttsban = {}
+
+@bot.slash_command(name='texttospeech', description='generate an mp3 file of the input text')
+async def _texttospeech(ctx, text: Option(str, 'the text to turn into an MP3', required=True)):
+    global ttsban
+    if not ttsban.get(ctx.author.id):
+        ttsban[ctx.author.id] = True
+        await ctx.defer()
+        if len(text) > 1024: 
+            embed = discord.Embed(title='egirl\'s Text to Speech Generator', description=f'Unable to generate text, it is {len(text)-1024} characters too long!')
+            embed.set_footer(text=f'{bot.user.name} • ©{reportManagerName}', icon_url=f'{bot.user.avatar.url}')
+            await ctx.respond(embed=embed)
+            return
+        tts_engine = pyttsx3.init()
+        tts_engine.save_to_file(text, f'tts/{ctx.author.id}.mp3')
+        tts_engine.runAndWait()
+        tts_engine.stop()
+        response_file = discord.File(f'tts/{ctx.author.id}.mp3', filename='generated_speech.mp3')
+        embed = discord.Embed(title='egirl\'s Text to Speech Generator', description='the generated speech is in the embed above!')
+        embed.add_field(name='Text', value=text)
+        embed.set_footer(text=f'{bot.user.name} • ©{reportManagerName}', icon_url=f'{bot.user.avatar.url}')
+        await ctx.respond(embed=embed, file=response_file)
+        response_file.close()
+        os.remove(f'tts/{ctx.author.id}.mp3')
+        ttsban.pop(ctx.author.id)
+    else: 
+        embed = discord.Embed(title='egirl\'s Text to Speech Generator', description=f'Please wait until your text is done generating!')
+        embed.set_footer(text=f'{bot.user.name} • ©{reportManagerName}', icon_url=f'{bot.user.avatar.url}')
+        await ctx.respond(embed=embed)
+        return
 
 bootstart = time.time()
 bot.run(TOKEN)
