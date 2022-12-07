@@ -22,7 +22,7 @@ bot = discord.AutoShardedBot(case_insensitive=True, command_prefix=";", intents=
 bot.topggpy = topgg.DBLClient(bot, topggToken)
 
 debugMode = False
-egirlVersion = '1.22'
+egirlVersion = '2.0'
 loggingChannel = 994443884878901378
 reportManager = 402569003903483904
 reportManagerName = 'poppy#0001'
