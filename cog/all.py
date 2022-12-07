@@ -1,4 +1,4 @@
-import asyncio, glob, json, math, os, random, time, dice
+import asyncio, glob, json, math, os, random, time, dice, gtts
 import aiohttp, discord, requests, topgg, pyttsx3, string, sqlite3
 from io import BytesIO
 from discord import Option, OptionChoice
@@ -11,6 +11,7 @@ from main import egirl_cogs, hyToken, topggToken, booksToken, weatherToken, egir
 debugMode = False
 
 reportLock = []
+ttsban = {}
 
 class cog_all(commands.Cog):
     def __init__(self, bot, *args, **kwargs):
@@ -23,24 +24,6 @@ class cog_all(commands.Cog):
         self.wipeReportBan.start()
         self.pfp_task.start()
         self.topggStats.start()
-
-    def get_welcome_channel(guildID):
-        with open('db.json', 'r') as f:
-            welChannels = json.load(f)
-        f.close()
-        return welChannels[str(guildID)]
-
-    def get_goodbye_channel(guildID):
-        with open('byedb.json', 'r') as f:
-            byeChannels = json.load(f)
-        f.close()
-        return byeChannels[str(guildID)]
-
-    def get_uwu_state(guildID):
-        with open('uwudb.json', 'r') as f:
-            uwuState = json.load(f)
-        f.close()
-        return uwuState[str(guildID)]
 
     @tasks.loop(minutes=30)
     async def pfp_task(self):
@@ -87,39 +70,6 @@ class cog_all(commands.Cog):
             print(f"updated guild count: ({self.bot.topggpy.guild_count})")
         except Exception as e:
             print(f"encountered whoopsie when posting server count (top.gg)\nError: {e}")
-
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        if message.author.bot: 
-            return
-        if message.mentions:
-            ii = []
-            for i in message.mentions:
-                ii.append(i.id)
-            if self.bot.user.id in ii:
-                egirlEmbed = discord.Embed(title='about egirl', url='https://cloverbrand.xyz/egirl/', color=0x202225)
-                egirlEmbed.add_field(name=f'running egirl v{egirlVersion}', value=
-                    f'**[invite !](https://cloverbrand.xyz/egirl/invite/)** | **[website !](https://cloverbrand.xyz)** | **[vote !](https://top.gg/bot/825415772075196427/vote)**\n\
-                    egirl is constantly being updated!\n\
-                    if you have an issue, contact the developer @ poppy#0001 or egirl@cloverbrand.xyz\n\
-                    egirl\'s pronouns are she/her',inline=False)
-                tip = [
-                    '**tip:** egirl\'s profile picture changes every 10 minutes!',
-                    '**tip:** some egirl commands can only be accessed by poppy, ask her to show you!',
-                    '**tip:** invite egirl\'s best friend, catgirl @ https://bot.cloverbrand.xyz!',
-                    '**tip:** schedule regular veterinary visits for your pets!',
-                    '**fact:** trans rights are human rights!',
-                    '**fact:** egirl\'s favorite color is \#202225'
-                ]
-                egirlEmbed.add_field(name=f'extra', value=f'{tip[random.randrange(0, len(tip))]}', inline=False)
-                egirlEmbed.set_footer(text=f'requested by {message.author}', icon_url=f'{message.author.avatar.url}'),
-                await message.reply(embed=egirlEmbed, mention_author=False)
-        try:
-            if self.get_uwu_state(message.guild.id) == 'on':
-                if random.randrange(0, 20+1) == 5:
-                    messageables = ['UwU', 'OwO', '>w<', '^w^']
-                    await message.channel.send(messageables[random.randrange(0, len(messageables))], mention_author=False)
-        except: pass
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
@@ -1480,8 +1430,6 @@ class cog_all(commands.Cog):
             ', inline=False)
         await ctx.respond(embed=embed)
 
-    ttsban = {}
-
     @commands.slash_command(name='texttospeech', description='generate an mp3 file of the input text')
     async def _texttospeech(self, ctx, text: Option(str, 'the text to turn into an MP3', required=True)):
         global ttsban
@@ -1493,10 +1441,8 @@ class cog_all(commands.Cog):
                 embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
                 await ctx.respond(embed=embed)
                 return
-            tts_engine = pyttsx3.init()
-            tts_engine.save_to_file(text, f'tts/{ctx.author.id}.mp3')
-            tts_engine.runAndWait()
-            tts_engine.stop()
+            myobj = gtts.gTTS(text=text, lang='en', slow=False)
+            myobj.save(f'tts/{ctx.author.id}.mp3')
             response_file = discord.File(f'tts/{ctx.author.id}.mp3', filename='generated_speech.mp3')
             embed = discord.Embed(title='egirl\'s Text to Speech Generator', description='the generated speech is in the embed above!')
             embed.add_field(name='Text', value=text)

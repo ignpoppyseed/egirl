@@ -16,7 +16,7 @@ class cog_counting(commands.Cog):
             cursor.execute(f"SELECT current_count FROM counting WHERE server_id = {str(message.guild.id)}")
             try: count = int(''.join(cursor.fetchone()))
             except TypeError: count = int(cursor.fetchone())
-        except AttributeError:
+        except:
             return
         if count is None:
             return

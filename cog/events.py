@@ -50,7 +50,7 @@ class cog_events(commands.Cog):
                     messageables = ['UwU', 'OwO', '>w<', '^w^']
                     await message.channel.send(messageables[random.randrange(0, len(messageables))], mention_author=False)
             else: return
-        except Exception as e: print(e); return
+        except Exception as e: return
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
@@ -91,7 +91,7 @@ class cog_events(commands.Cog):
                 # clean up
                 os.remove(f'welcome/{member.id}.png')
             else: return
-        except Exception as e: print(e); return
+        except Exception as e: return
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
@@ -107,7 +107,7 @@ class cog_events(commands.Cog):
                 channel = self.bot.get_channel(int(goodbyeChannel))
                 await channel.send(embed=embed)
             else: return
-        except Exception as e: print(e); return
+        except Exception as e: return
 
 def setup(bot):
     bot.add_cog(cog_events(bot))
