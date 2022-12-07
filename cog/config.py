@@ -27,9 +27,9 @@ class cog_config(commands.Cog):
             try:
                 db = sqlite3.connect("database.sqlite")
                 cursor = db.cursor()
-                cursor.execute(f"SELECT welcome_channel FROM data WHERE server_id = {ctx.guild.id}")
-                result = cursor.fetchone()
-                if result is None:
+                cursor.execute(f"SELECT {ctx.guild.id} FROM data")
+                server_result = cursor.fetchone()[0]
+                if server_result is None:
                     sql = ("INSERT INTO data(server_id, welcome_channel) VALUES(?,?)")
                     val = (ctx.guild.id, channel.id)
                     cursor.execute(sql, val)
@@ -38,15 +38,27 @@ class cog_config(commands.Cog):
                     embed.set_author(name=f'\u200b', icon_url='https://raw.githubusercontent.com/ignpoppyseed/ignpoppyseed/main/img/check_tossface.png')
                     embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
                     await ctx.respond(embed=embed)
-                elif result is not None:
-                    sql = ("UPDATE data SET welcome_channel = ? WHERE server_id = ?")
-                    val = (channel.id, ctx.guild.id)
-                    cursor.execute(sql, val)
-                    db.commit()
-                    embed = discord.Embed(title=discord.Embed.Empty, description=f'welcome channel changed to {channel.mention}', color=0x202225)
-                    embed.set_author(name=f'\u200b', icon_url='https://raw.githubusercontent.com/ignpoppyseed/ignpoppyseed/main/img/check_tossface.png')
-                    embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
-                    await ctx.respond(embed=embed)
+                else:
+                    cursor.execute(f"SELECT welcome_channel FROM data WHERE server_id = {ctx.guild.id}")
+                    result = cursor.fetchone()
+                    if result is None:
+                        sql = ("INSERT INTO data(server_id, welcome_channel) VALUES(?,?)")
+                        val = (ctx.guild.id, channel.id)
+                        cursor.execute(sql, val)
+                        db.commit()
+                        embed = discord.Embed(title=discord.Embed.Empty, description=f'welcome channel set to {channel.mention}', color=0x202225)
+                        embed.set_author(name=f'\u200b', icon_url='https://raw.githubusercontent.com/ignpoppyseed/ignpoppyseed/main/img/check_tossface.png')
+                        embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
+                        await ctx.respond(embed=embed)
+                    elif result is not None:
+                        sql = ("UPDATE data SET welcome_channel = ? WHERE server_id = ?")
+                        val = (channel.id, ctx.guild.id)
+                        cursor.execute(sql, val)
+                        db.commit()
+                        embed = discord.Embed(title=discord.Embed.Empty, description=f'welcome channel changed to {channel.mention}', color=0x202225)
+                        embed.set_author(name=f'\u200b', icon_url='https://raw.githubusercontent.com/ignpoppyseed/ignpoppyseed/main/img/check_tossface.png')
+                        embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
+                        await ctx.respond(embed=embed)
                 db.close()
             except Exception as e:
                 embed = discord.Embed(title=discord.Embed.Empty, description=f'**SQLDatabaseError**: {e}\nUse </reportissue:1041952478540877826> or contact the developer!', color=0x202225)
@@ -66,7 +78,7 @@ class cog_config(commands.Cog):
                 db = sqlite3.connect("database.sqlite")
                 cursor = db.cursor()
                 cursor.execute(f"SELECT welcome_channel FROM data WHERE server_id = {ctx.guild.id}")
-                result = cursor.fetchone()
+                result = cursor.fetchone()[0]
                 if result is None:
                     embed = discord.Embed(title=discord.Embed.Empty, description=f'there was no welcome channel so nothing was removed!', color=0x202225)
                     embed.set_author(name=f'\u200b', icon_url='https://raw.githubusercontent.com/ignpoppyseed/ignpoppyseed/main/img/dash_tossface.png')
@@ -98,9 +110,9 @@ class cog_config(commands.Cog):
             try:
                 db = sqlite3.connect("database.sqlite")
                 cursor = db.cursor()
-                cursor.execute(f"SELECT goodbye_channel FROM data WHERE server_id = {ctx.guild.id}")
-                result = cursor.fetchone()
-                if result is None:
+                cursor.execute(f"SELECT {ctx.guild.id} FROM data")
+                server_result = cursor.fetchone()[0]
+                if server_result is None:
                     sql = ("INSERT INTO data(server_id, goodbye_channel) VALUES(?,?)")
                     val = (ctx.guild.id, channel.id)
                     cursor.execute(sql, val)
@@ -109,15 +121,27 @@ class cog_config(commands.Cog):
                     embed.set_author(name=f'\u200b', icon_url='https://raw.githubusercontent.com/ignpoppyseed/ignpoppyseed/main/img/check_tossface.png')
                     embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
                     await ctx.respond(embed=embed)
-                elif result is not None:
-                    sql = ("UPDATE data SET goodbye_channel = ? WHERE server_id = ?")
-                    val = (channel.id, ctx.guild.id)
-                    cursor.execute(sql, val)
-                    db.commit()
-                    embed = discord.Embed(title=discord.Embed.Empty, description=f'goodbye channel changed to {channel.mention}', color=0x202225)
-                    embed.set_author(name=f'\u200b', icon_url='https://raw.githubusercontent.com/ignpoppyseed/ignpoppyseed/main/img/check_tossface.png')
-                    embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
-                    await ctx.respond(embed=embed)
+                else:
+                    cursor.execute(f"SELECT goodbye_channel FROM data WHERE server_id = {ctx.guild.id}")
+                    result = cursor.fetchone()
+                    if result is None:
+                        sql = ("INSERT INTO data(server_id, goodbye_channel) VALUES(?,?)")
+                        val = (ctx.guild.id, channel.id)
+                        cursor.execute(sql, val)
+                        db.commit()
+                        embed = discord.Embed(title=discord.Embed.Empty, description=f'goodbye channel set to {channel.mention}', color=0x202225)
+                        embed.set_author(name=f'\u200b', icon_url='https://raw.githubusercontent.com/ignpoppyseed/ignpoppyseed/main/img/check_tossface.png')
+                        embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
+                        await ctx.respond(embed=embed)
+                    elif result is not None:
+                        sql = ("UPDATE data SET goodbye_channel = ? WHERE server_id = ?")
+                        val = (channel.id, ctx.guild.id)
+                        cursor.execute(sql, val)
+                        db.commit()
+                        embed = discord.Embed(title=discord.Embed.Empty, description=f'goodbye channel changed to {channel.mention}', color=0x202225)
+                        embed.set_author(name=f'\u200b', icon_url='https://raw.githubusercontent.com/ignpoppyseed/ignpoppyseed/main/img/check_tossface.png')
+                        embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
+                        await ctx.respond(embed=embed)
                 db.close()
             except Exception as e:
                 embed = discord.Embed(title=discord.Embed.Empty, description=f'**SQLDatabaseError**: {e}\nUse </reportissue:1041952478540877826> or contact the developer!', color=0x202225)
@@ -137,7 +161,7 @@ class cog_config(commands.Cog):
                 db = sqlite3.connect("database.sqlite")
                 cursor = db.cursor()
                 cursor.execute(f"SELECT goodbye_channel FROM data WHERE server_id = {ctx.guild.id}")
-                result = cursor.fetchone()
+                result = cursor.fetchone()[0]
                 if result is None:
                     embed = discord.Embed(title=discord.Embed.Empty, description=f'there was no goodbye channel so nothing was removed!', color=0x202225)
                     embed.set_author(name=f'\u200b', icon_url='https://raw.githubusercontent.com/ignpoppyseed/ignpoppyseed/main/img/dash_tossface.png')
@@ -170,7 +194,7 @@ class cog_config(commands.Cog):
                 db = sqlite3.connect("database.sqlite")
                 cursor = db.cursor()
                 cursor.execute(f"SELECT {ctx.guild.id} FROM data")
-                server_result = cursor.fetchone()
+                server_result = cursor.fetchone()[0]
                 if server_result is None:
                     sql = ("INSERT INTO data(server_id, uwumode) VALUES(?,?)")
                     val = (ctx.guild.id, 'ON')
@@ -182,10 +206,10 @@ class cog_config(commands.Cog):
                     await ctx.respond(embed=embed)
                 else:
                     cursor.execute(f"SELECT uwumode FROM data WHERE server_id = {ctx.guild.id}")
-                    result = cursor.fetchone()
+                    result = cursor.fetchone()[0]
                     if result is None:
                         sql = ("UPDATE data SET uwumode = ? WHERE server_id = ?")
-                        val = ('1', ctx.guild.id)
+                        val = ('ON', ctx.guild.id)
                         cursor.execute(sql, val)
                         db.commit()
                         embed = discord.Embed(title=discord.Embed.Empty, description=f'uwumode enabled!', color=0x202225)
@@ -196,10 +220,44 @@ class cog_config(commands.Cog):
                         embed = discord.Embed(title=discord.Embed.Empty, description=f'uwumode was already enabled!', color=0x202225)
                         embed.set_author(name=f'\u200b', icon_url='https://raw.githubusercontent.com/ignpoppyseed/ignpoppyseed/main/img/dash_tossface.png')
                         embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
-                    await ctx.respond(embed=embed)
+                        await ctx.respond(embed=embed)
                 db.close()
             except Exception as e:
                 embed = discord.Embed(title=discord.Embed.Empty, description=f'**SQLDatabaseError**: {e}\nUse </reportissue:1041952478540877826> or contact the developer!', color=0x202225)
+                embed.set_author(name=f'\u200b', icon_url='https://raw.githubusercontent.com/ignpoppyseed/ignpoppyseed/main/img/x_tossface.png')
+                embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
+                await ctx.respond(embed=embed, ephemeral=True)
+        else:
+            embed = discord.Embed(title=discord.Embed.Empty, description=f'**PermissionsError**: You must be an administrator to run this command!', color=0x202225)
+            embed.set_author(name=f'\u200b', icon_url='https://raw.githubusercontent.com/ignpoppyseed/ignpoppyseed/main/img/x_tossface.png')
+            embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
+            await ctx.respond(embed=embed, ephemeral=True)
+
+    @config_uwumode.command(name='disable', description='disable uwumode')
+    async def _uwumode_disable(self, ctx):
+        if ctx.author.guild_permissions.administrator:
+            try:
+                db = sqlite3.connect("database.sqlite")
+                cursor = db.cursor()
+                cursor.execute(f"SELECT uwumode FROM data WHERE server_id = {ctx.guild.id}")
+                result = cursor.fetchone()
+
+                if result is None:
+                    embed = discord.Embed(title=discord.Embed.Empty, description=f'uwumode wasn\'t enabled, so it couldn\'t be disabled!', color=0x202225)
+                    embed.set_author(name=f'\u200b', icon_url='https://raw.githubusercontent.com/ignpoppyseed/ignpoppyseed/main/img/dash_tossface.png')
+                    embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
+                    await ctx.respond(embed=embed)
+                elif result is not None:
+                    sql = (f"UPDATE data SET uwumode = NULL WHERE server_id = {ctx.guild.id}")
+                    embed = discord.Embed(title=discord.Embed.Empty, description=f'uwumode disabled!', color=0x202225)
+                    embed.set_author(name=f'\u200b', icon_url='https://raw.githubusercontent.com/ignpoppyseed/ignpoppyseed/main/img/check_tossface.png')
+                    embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
+                    cursor.execute(sql)
+                    db.commit()
+                    await ctx.respond(embed=embed)
+                db.close()
+            except Exception as e:
+                embed = discord.Embed(title=discord.Embed.Empty, description=f'**SQLDatabaseError**: {e}\nUse </reportissue:0> or contact the developer!', color=0x202225)
                 embed.set_author(name=f'\u200b', icon_url='https://raw.githubusercontent.com/ignpoppyseed/ignpoppyseed/main/img/x_tossface.png')
                 embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
                 await ctx.respond(embed=embed, ephemeral=True)

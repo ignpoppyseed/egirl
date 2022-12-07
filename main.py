@@ -17,7 +17,7 @@ intents = discord.Intents.all()
 
 bot = discord.AutoShardedBot(case_insensitive=True, command_prefix=";", intents=intents, activity=discord.Activity(type=discord.ActivityType.watching, name="connecting to api,,,"), status=discord.Status.idle)
 
-egirl_cogs = ['cog.all', 'cog.config']
+egirl_cogs = ['cog.all', 'cog.config', 'cog.events', 'cog.counting']
 
 debugMode = False
 egirlVersion = '1.22'

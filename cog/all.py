@@ -318,7 +318,6 @@ class cog_all(commands.Cog):
         embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}'),
         await ctx.respond(embed=embed)
 
-
     @commands.slash_command(
         name="miner",
         description="grab skin related images of minecraft user",
@@ -414,159 +413,12 @@ class cog_all(commands.Cog):
         egirlEmbed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}'),
         await ctx.respond(embed=egirlEmbed)
 
-
     @commands.slash_command(name='invite', description='invite egirl to your server')
     async def _invite(self, ctx):
         inviteEmbed = discord.Embed(title='invite egirl', url='https://discord.com/api/oauth2/authorize?client_id=825415772075196427&permissions=8&scope=bot%20applications.commands', description='invite egirl if you want to be cool', color=0x202225)
         inviteEmbed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}'),
         await ctx.respond(embed=inviteEmbed)
 
-    @commands.slash_command(name='welcome', description='choose the channel to send welcomes in')
-    async def _welcome(self, ctx, action: Option(str, "add or remove", choices=[
-        OptionChoice(name='set', value='add'), 
-        OptionChoice(name='remove', value='rem')
-        ], required=True), channelid: Option(discord.TextChannel, "channel ID", required=True)):
-        if ctx.author.guild_permissions.administrator:
-            if action == 'add':
-                try:
-                    with open('db.json', 'r') as f:
-                        welChannels = json.load(f)
-                    try:
-                        if self.get_welcome_channel(ctx.guild.id) == str(channelid.id):
-                            await ctx.respond(
-                                f'nothing changed! <#{str(channelid.id)}> is still the welcome channel!'
-                            )
-                        elif self.get_welcome_channel(ctx.guild.id) != str(
-                                channelid.id):
-                            welChannels[str(ctx.guild.id)] = str(channelid.id)
-                            with open('db.json', 'w+') as f:
-                                json.dump(welChannels, f)
-                            await ctx.respond(
-                                f'<#{self.get_welcome_channel(ctx.guild.id)}> now set as the welcome channel!'
-                            )
-                    except:
-                        welChannels[str(ctx.guild.id)] = str(channelid.id)
-                        with open('db.json', 'w+') as f:
-                            json.dump(welChannels, f)
-                        await ctx.respond(
-                            f'<#{self.get_welcome_channel(ctx.guild.id)}> now set as the welcome channel!'
-                        )
-                except json.decoder.JSONDecodeError:
-                    await ctx.respond(f'error!')
-
-            elif action == 'rem':
-                with open('db.json', 'r') as f:
-                    welChannels = json.load(f)
-                try:
-                    del welChannels[str(ctx.guild.id)]
-                    with open('db.json', 'w') as f:
-                        json.dump(welChannels, f)
-                    await ctx.respond(f'welcome channel removed!')
-                except:
-                    await ctx.respond(
-                        f'no channel was removed because there was no welcome channel!'
-                    )
-            elif action == 'rem':
-                pass
-        else:
-            await ctx.respond('you must be an admin to run this command! ❌', ephemeral=True)
-
-    @commands.slash_command(name='goodbye', description='choose the channel to send goodbyes in')
-    async def _goodbye(self, ctx, action: Option(str, "add or remove", choices=[
-        OptionChoice(name='set', value='add'), 
-        OptionChoice(name='remove', value='rem')
-        ], required=True), channelid: Option(discord.TextChannel, "channel ID", required=True)):
-        if ctx.author.guild_permissions.administrator:
-            if action == 'add':
-                try:
-                    with open('byedb.json', 'r') as f:
-                        welChannels = json.load(f)
-                    try:
-                        if self.get_goodbye_channel(ctx.guild.id) == str(channelid.id):
-                            await ctx.respond(
-                                f'nothing changed! <#{str(channelid.id)}> is still the goodbye channel!'
-                            )
-                        elif self.get_goodbye_channel(ctx.guild.id) != str(
-                                channelid.id):
-                            welChannels[str(ctx.guild.id)] = str(channelid.id)
-                            with open('byedb.json', 'w+') as f:
-                                json.dump(welChannels, f)
-                            await ctx.respond(
-                                f'<#{self.get_goodbye_channel(ctx.guild.id)}> now set as the goodbye channel!'
-                            )
-                    except:
-                        welChannels[str(ctx.guild.id)] = str(channelid.id)
-                        with open('byedb.json', 'w+') as f:
-                            json.dump(welChannels, f)
-                        await ctx.respond(
-                            f'<#{self.get_goodbye_channel(ctx.guild.id)}> now set as the goodbye channel!'
-                        )
-                except json.decoder.JSONDecodeError:
-                    await ctx.respond(f'error!')
-
-            elif action == 'rem':
-                with open('byedb.json', 'r') as f:
-                    welChannels = json.load(f)
-                try:
-                    del welChannels[str(ctx.guild.id)]
-                    with open('byedb.json', 'w') as f:
-                        json.dump(welChannels, f)
-                    await ctx.respond(f'goodbye channel removed!')
-                except:
-                    await ctx.respond(
-                        f'no channel was removed because there was no goodbye channel!'
-                    )
-            elif action == 'rem':
-                pass
-        else:
-            await ctx.respond('you must be an admin to run this command! ❌', ephemeral=True)
-
-    @commands.slash_command(name='uwumode', description='enable or disable uwumode')
-    async def _uwumode(self, ctx, state: Option(str, "on or off", choices=[
-        OptionChoice(name='on', value='on'), 
-        OptionChoice(name='off', value='off')
-        ], required=True)):
-        if ctx.author.guild_permissions.administrator:
-            if state == 'on':
-                try:
-                    with open('uwudb.json', 'r') as f:
-                        welChannels = json.load(f)
-                    try:
-                        if self.get_uwu_state(ctx.guild.id) == 'on':
-                            await ctx.respond(
-                                f'nothing changed! UwUmode is still enabled! UwU'
-                            )
-                        elif self.get_uwu_state(ctx.guild.id) != 'on':
-                            welChannels[str(ctx.guild.id)] = 'on'
-                            with open('uwudb.json', 'w+') as f:
-                                json.dump(welChannels, f)
-                            await ctx.respond(
-                                f'UwUmode is now enabled! UwU'
-                            )
-                    except:
-                        welChannels[str(ctx.guild.id)] = 'on'
-                        with open('uwudb.json', 'w+') as f:
-                            json.dump(welChannels, f)
-                        await ctx.respond(
-                            f'UwUmode is now enabled! UwU'
-                        )
-                except json.decoder.JSONDecodeError:
-                    await ctx.respond(f'error!')
-
-            elif state == 'off':
-                with open('uwudb.json', 'r') as f:
-                    welChannels = json.load(f)
-                try:
-                    del welChannels[str(ctx.guild.id)]
-                    with open('uwudb.json', 'w') as f:
-                        json.dump(welChannels, f)
-                    await ctx.respond(f'UwUmode is now disabled! TwT')
-                except:
-                    await ctx.respond(
-                        f'UwUmode is still disabled! TwT'
-                    )
-        else:
-            await ctx.respond('you must be an admin to run this command! ❌', ephemeral=True)
     @commands.slash_command(name='slaydetector', description='check if someone is slaying')
     async def _slaydetector(self, ctx, user: Option(discord.Member, "user to check for slaying", required=False)):
         if user == None: user = ctx.author
@@ -1205,7 +1057,7 @@ class cog_all(commands.Cog):
                 extS = 'No extensions loaded!'
             embed = discord.Embed(title=f'welcome to {self.bot.user.name} debug mode, {bot_owner.name}!', description=f'command invoked: {cmd}\nuser invoked: {str(user)}', color=0x202225)
             embed.add_field(name='currently loaded extensions', value=extS, inline=False)
-            embed.add_field(name='commands', value='reloadallexts - reload all extensionsn\ncog.<cog name> - reload extension with specified name', inline=False)
+            embed.add_field(name='commands', value='• **reloadallexts**- reload all extensionsn\n• **cog.<cog name>** - reload extension with specified name\n• **pages** - list all servers egirl is in\n• **gcount** - get number of servers egirl is in\n• **keegan** - i love you keegan\n• **listcommands** - list all loaded commands\n• **banner** - get banner of user', inline=False)
             embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
             return embed
         if ctx.author.id == bot_owner.id:
