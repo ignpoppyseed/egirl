@@ -16,7 +16,7 @@ ttsban = {}
 class cog_all(commands.Cog):
     def __init__(self, bot, *args, **kwargs):
         self.bot = bot
-        self.bot.topggpy = topgg.DBLClient(self.bot, topggToken)
+        self.eliban = False
 
     @commands.Cog.listener()
     async def on_connect(self):
@@ -65,58 +65,16 @@ class cog_all(commands.Cog):
 
     @tasks.loop(minutes=30)
     async def topggStats(self):
+        self.bot.topggpy = topgg.DBLClient(self.bot, topggToken)
         try:
             await self.bot.topggpy.post_guild_count()
             print(f"updated guild count: ({self.bot.topggpy.guild_count})")
         except Exception as e:
-            print(f"encountered whoopsie when posting server count (top.gg)\nError: {e}")
-
-    @commands.Cog.listener()
-    async def on_member_join(self, member):
-        try:
-            welcomeChannel = self.get_welcome_channel(str(member.guild.id))
-            # this section creates the image from the params
-            img = Image.open('templates/welcomeTemplate.png')
-            img = img.convert("RGBA")
-            mask1 = Image.open('templates/profile_circle.jpg')
-            async with aiohttp.ClientSession() as session:
-                async with session.get(str(member.avatar)) as resp:
-                    profileAvatar = Image.open(BytesIO(await resp.read()))
-            profileAvatar = profileAvatar.convert("RGBA")
-            profileAvatar = profileAvatar.resize((120, 120), Image.Resampling.LANCZOS)
-            welcFont = ImageFont.truetype('fonts/font.ttf', size=32)
-            textLayer = Image.new('RGBA', img.size, (255, 255, 255, 0))
-            templateWidth, templateHeight = img.size
-            pfpWidth, pfpHeight = profileAvatar.size
-            offset = ((templateWidth - pfpWidth) // 2, ((templateHeight - pfpHeight) // 2) - 30)
-            img.paste(profileAvatar, offset, mask=mask1)
-            draw = ImageDraw.Draw(textLayer)
-            draw.text(((templateWidth / 2) + 3, (templateHeight / 2) + 63), f'{member.name}#{member.discriminator}', (0, 0, 0, 80), anchor="mm", font=welcFont)
-            draw.text((templateWidth / 2, (templateHeight / 2) + 60), f'{member.name}#{member.discriminator}', (255, 255, 255), anchor="mm", font=welcFont)
-            img = Image.alpha_composite(img, textLayer)
-            img.save(f'welcome/{member.id}.png')
-            #build the welcome embed
-            welcomeEmbed = discord.Embed(title=f'', description=f'welcome {member.mention}!', color=0x202225)
-            embedSendFile = discord.File(f'welcome/{member.id}.png', filename='welcome!.png')
-            welcomeEmbed.set_image(url='attachment://welcome.png')
-            # send the welcome embed
-            channel = self.bot.get_channel(int(welcomeChannel))
-            await channel.send(file=embedSendFile, embed=welcomeEmbed)
-            # clean up
-            os.remove(f'welcome/{member.id}.png')
-        except:
-            pass
-
-    @commands.Cog.listener()
-    async def on_member_remove(self, member):
-        try:
-            goodbyeChannel = self.get_goodbye_channel(str(member.guild.id))
-            embed = discord.Embed(title=f'', description=f'**{member}** left! we\'ll miss you!', color=0x202225)
-            embed.set_thumbnail(url=member.display_avatar.url)
-            channel = self.bot.get_channel(int(goodbyeChannel))
-            await channel.send(embed=embed)
-        except:
-            pass
+            if e == 'Top.gg API token not provided':
+                print('no topgg token')
+            else:
+                print(f"encountered whoopsie when posting server count (top.gg)\nError: {e}")
+        await self.bot.topggpy.close()
 
     @commands.slash_command(name="message", description="embed message")
     async def _message(
@@ -334,11 +292,11 @@ class cog_all(commands.Cog):
         embed = discord.Embed(title="egirl's Help Menu",
         description= "**[invite !](https://cloverbrand.xyz/egirl/invite/)** | **[website !](https://cloverbrand.xyz)** | **[vote !](https://top.gg/bot/825415772075196427/vote)**",
         color = 0x202225)
-        embed.add_field(name = "utility", value = "```\n- message\n- editmessage\n- nuke\n- kick\n- ban\n- nick set\n- nick reset\n- poll\n- qotd\n- profile\n- passwordgenerator\n- texttospeech```", inline = True)
+        embed.add_field(name = "utility", value = "```\n- message\n- editmessage\n- nuke\n- kick\n- ban\n- nick set\n- nick reset\n- poll\n- qotd\n- profile\n- passwordgenerator\n- texttospeech\n- lyrics```", inline = True)
         embed.add_field(name = "fun", value = "```\n- rp\n- 8ball\n- slaydetector\n- howcute\n- vs\n- rockpaperscissors\n- howboopable\n- wyr\n- nhie\n- tod\n- animatedstorytitle\n- jortsweather```", inline = True)
-        embed.add_field(name = "other", value = "```\n- miner\n- hypixel\n- flip\n- roll expression\n- roll help\n- choose\n- formatting```", inline = True)
+        embed.add_field(name = "other", value = "```\n- miner\n- hypixel\n- flip\n- roll expression\n- roll help\n- choose\n- formatting\n- gn-chat\n- gm-chat\n- emoji get\n- character-counter\n- word-counter```", inline = True)
         embed.add_field(name = "egirl", value = "```\n- egirl\n- help\n- invite\n- reportissue```", inline = True)
-        embed.add_field(name = "config", value = "```\n- welcome\n- goodbye\n- uwumode```", inline = True)
+        embed.add_field(name = "config", value = "```\n- config welcome\n- config goodbye\n- config uwumode```", inline = True)
         embed.add_field(name = "images", value = "```\n- possum\n- dog\n- cat\n- imagegen clyde\n- imagegen tweet```", inline = True)
         embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
         await ctx.respond(embed=embed)
@@ -412,98 +370,107 @@ class cog_all(commands.Cog):
     async def _rp_punch(self, ctx, user: Option(discord.Member, 'user to punch', required=True)):
         embed = discord.Embed(title='', description=f'<@{ctx.author.id}> punches <@{user.id}>!', color=0x202225)
         embed.set_image(url=requests.get(f'{roleplay_api}punch').json()['url'])
-        embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
     @roleplay.command(name='hug', description='hug someone')
     async def _rp_hug(self, ctx, user: Option(discord.Member, 'user to hug', required=True)):
         embed = discord.Embed(title='', description=f'<@{ctx.author.id}> hugs <@{user.id}>!', color=0x202225)
         embed.set_image(url=requests.get(f'{roleplay_api}hug').json()['url'])
-        embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
     @roleplay.command(name='poke', description='poke someone')
     async def _rp_poke(self, ctx, user: Option(discord.Member, 'user to poke', required=True)):
         embed = discord.Embed(title='', description=f'<@{ctx.author.id}> pokes <@{user.id}>!', color=0x202225)
         embed.set_image(url=requests.get(f'{roleplay_api}poke').json()['url'])
-        embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
     @roleplay.command(name='tickle', description='tickle someone')
     async def _rp_tickle(self, ctx, user: Option(discord.Member, 'user to tickle', required=True)):
         embed = discord.Embed(title='', description=f'<@{ctx.author.id}> tickles <@{user.id}>!', color=0x202225)
         embed.set_image(url=requests.get(f'{roleplay_api}tickle').json()['url'])
-        embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
     @roleplay.command(name='lick', description='lick someone')
     async def _rp_lick(self, ctx, user: Option(discord.Member, 'user to lick', required=True)):
         embed = discord.Embed(title='', description=f'<@{ctx.author.id}> licks <@{user.id}>!', color=0x202225)
         embed.set_image(url=requests.get(f'{roleplay_api}lick').json()['url'])
-        embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
     @roleplay.command(name='kiss', description='kiss someone')
     async def _rp_kiss(self, ctx, user: Option(discord.Member, 'user to AAAA', required=True)):
         embed = discord.Embed(title='', description=f'<@{ctx.author.id}> kisses <@{user.id}>!', color=0x202225)
         embed.set_image(url=requests.get(f'{roleplay_api}kiss').json()['url'])
-        embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
     @roleplay.command(name='bite', description='bite someone')
     async def _rp_bite(self, ctx, user: Option(discord.Member, 'user to bite', required=True)):
-        embed = discord.Embed(title='', description=f'<@{ctx.author.id}> bites <@{user.id}>!', color=0x202225)
-        embed.set_image(url=requests.get(f'{roleplay_api}nom').json()['url'])
-        embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
-        await ctx.respond(embed=embed)
+        load_dotenv()
+        tenorToken = os.getenv('TENOR')
+        query, limit = 'anime bite', '10'
+        try:
+            res = requests.get(f'https://tenor.googleapis.com/v2/search?q={query}&limit={limit}&random=true&media_filter=gif&key={tenorToken}').json()['results'][0]['media_formats']['gif']['url']
+            embed = discord.Embed(title='', description=f'<@{ctx.author.id}> bites <@{user.id}>!', color=0x202225)
+            embed.set_image(url=res)
+            embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
+            await ctx.respond(embed=embed)
+        except Exception as e:
+            embed = discord.Embed(title=discord.Embed.Empty, description=f'**TenorAPI Inaccessible**: {e}\nUse </reportissue:1041952478540877826> or contact the developer!')
+            embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
+            await ctx.respond(embed=embed)
 
     @roleplay.command(name='pat', description='pat someone')
     async def _rp_pat(self, ctx, user: Option(discord.Member, 'user to pat', required=True)):
         embed = discord.Embed(title='', description=f'<@{ctx.author.id}> pats <@{user.id}>!', color=0x202225)
         embed.set_image(url=requests.get(f'{roleplay_api}pat').json()['url'])
-        embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
     @roleplay.command(name='slap', description='slap someone')
     async def _rp_slap(self, ctx, user: Option(discord.Member, 'user to slap', required=True)):
         embed = discord.Embed(title='', description=f'<@{ctx.author.id}> slap <@{user.id}>!', color=0x202225)
         embed.set_image(url=requests.get(f'{roleplay_api}slap').json()['url'])
-        embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
     @roleplay.command(name='blush', description='blush')
     async def _rp_blush(self, ctx):
         embed = discord.Embed(title='', description=f'<@{ctx.author.id}> blushes', color=0x202225)
         embed.set_image(url=requests.get(f'{roleplay_api}blush').json()['url'])
-        embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
     @roleplay.command(name='cry', description='cry')
     async def _rp_cry(self, ctx):
         embed = discord.Embed(title='', description=f'<@{ctx.author.id}> cries', color=0x202225)
         embed.set_image(url=requests.get(f'{roleplay_api}cry').json()['url'])
-        embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
     @roleplay.command(name='pout', description='pout')
     async def _rp_pout(self, ctx):
         embed = discord.Embed(title='', description=f'<@{ctx.author.id}> pouts', color=0x202225)
         embed.set_image(url=requests.get(f'{roleplay_api}pout').json()['url'])
-        embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
     @roleplay.command(name='sleep', description='sleep')
     async def _rp_sleep(self, ctx):
         embed = discord.Embed(title='', description=f'<@{ctx.author.id}> goes to sleep', color=0x202225)
         embed.set_image(url=requests.get(f'{roleplay_api}sleep').json()['url'])
-        embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
     @roleplay.command(name='smug', description='smug')
     async def _rp_smug(self, ctx):
         embed = discord.Embed(title='', description=f'<@{ctx.author.id}> looks smug', color=0x202225)
         embed.set_image(url=requests.get(f'{roleplay_api}smug').json()['url'])
-        embed.set_footer(text = f'requested by {ctx.author}', icon_url=ctx.author.avatar.url)
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
     @commands.slash_command(
@@ -999,20 +966,39 @@ class cog_all(commands.Cog):
     async def _debug(self, ctx, cmd: Option(str, 'cmd', required=True), user: Option(discord.Member, 'cmd', required=False, default=None)):
         appinfo = await self.bot.application_info()
         bot_owner = appinfo.owner
+        cmd = cmd.lower()
         def debug_help():
             extS = ''
             for i in list(self.bot.extensions):
                 extS += i+'\n'
             if extS == '':
                 extS = 'No extensions loaded!'
+            helpcmds = {
+                'reloadallexts': 'reload all extensions',
+                'cog.<cog name>': 'reload extension with specified name',
+                'pages': 'list all servers egirl is in',
+                'gcount': 'get number of servers egirl is in',
+                'keegan': 'i love you keegan',
+                'listcommands': 'list all loaded commands',
+                'banner': 'get banner of user',
+                'wipecgtdb': 'wipe DBs for catgirl test',
+                'say <text>': 'make egirl speak in plain text',
+                'shutupeli': 'prevent eli from speaking (doesnt work)',
+            }
+            helptext = ''
+            for i in helpcmds:
+                helptext += f'• **{i}** - {helpcmds[i]}\n'
             embed = discord.Embed(title=f'welcome to {self.bot.user.name} debug mode, {bot_owner.name}!', description=f'command invoked: {cmd}\nuser invoked: {str(user)}', color=0x202225)
             embed.add_field(name='currently loaded extensions', value=extS, inline=False)
-            embed.add_field(name='commands', value='• **reloadallexts**- reload all extensionsn\n• **cog.<cog name>** - reload extension with specified name\n• **pages** - list all servers egirl is in\n• **gcount** - get number of servers egirl is in\n• **keegan** - i love you keegan\n• **listcommands** - list all loaded commands\n• **banner** - get banner of user', inline=False)
+            embed.add_field(name='commands', value=helptext, inline=False)
             embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
             return embed
         if ctx.author.id == bot_owner.id:
             if cmd.lower() == 'help':
                 await ctx.respond(embed=debug_help())
+            elif cmd == 'solorp':
+                embed = discord.Embed(title=f'', description=':(', color=0x202225)
+                await ctx.respond(embed=embed)
             elif cmd.lower() == 'reloadallexts':
                 extS = ''
                 failed = ''
@@ -1031,6 +1017,7 @@ class cog_all(commands.Cog):
                 embed.add_field(name='successfully reloaded', value=f'{extS}', inline=False)
                 embed.add_field(name='failed to reload', value=f'{failed}', inline=False)
                 embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
+                #await self.bot.sync_commands()
                 await ctx.respond(embed=embed)
             elif cmd.lower().startswith('cog.'):
                 try: 
@@ -1039,6 +1026,7 @@ class cog_all(commands.Cog):
                     embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
                     await ctx.respond(embed=embed)
                     print(f'successfully reloaded {cmd}')
+                    #await self.bot.sync_commands()
                 except Exception as e: 
                     print(f'failed to reload {cmd}\nerror: {e}')
                     embed = discord.Embed(title=f'', description=f'failed to reload {cmd}\nerror: {e}', color=0x202225)
@@ -1083,10 +1071,12 @@ class cog_all(commands.Cog):
                 await ctx.respond('keegan? as in poppy\'s extremely romanoledgeable wife?')
             elif cmd == 'listcommands':
                 cmds = '```'
+                cmd_count = 0
                 for cmd in self.bot.walk_application_commands():
                     cmds += cmd.qualified_name+'\n'
+                    cmd_count += 1
                 cmds += '```'
-                embed = discord.Embed(title=f'currently loaded commands', description=cmds, color=0x202225)
+                embed = discord.Embed(title=f'currently loaded commands ({cmd_count} in total)', description=cmds, color=0x202225)
                 embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
                 await ctx.respond(embed=embed)
 
@@ -1115,7 +1105,36 @@ class cog_all(commands.Cog):
                 paginator = pages.Paginator(pages=pages_to_send, disable_on_timeout=True, timeout=180)
                 await paginator.respond(ctx.interaction, ephemeral=False)
 
-            else: await ctx.respond(embed=debug_help())
+            elif cmd == 'wipecgtdb':
+                db = sqlite3.connect("database.sqlite")
+                cursor = db.cursor()
+                cursor.execute(f'DELETE FROM data WHERE server_id = 951027740256137226')
+                db.commit()
+                embed = discord.Embed(title='', description=f'wiped db enteries for `catgirl test`', color=0x202225)
+                embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
+                await ctx.respond(embed=embed)
+
+            elif cmd.startswith('say '):
+                await ctx.defer()
+                text = cmd.split(' ', 1)[1]
+                embed = discord.Embed(title='', description=f'sent! ✅', color=0x202225)
+                embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
+                await ctx.channel.send(text)
+                await ctx.respond(embed=embed, ephemeral=True)
+            elif cmd == 'shutupeli':
+                await ctx.defer()
+                if self.eliban == True:
+                    self.eliban = False
+                    embed = discord.Embed(title='', description=f'eli speech privilege set to `{self.eliban}`', color=0x202225)
+                    embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
+                    await ctx.respond(embed=embed, ephemeral=True)
+                elif self.eliban == False:
+                    self.eliban = True
+                    embed = discord.Embed(title='', description=f'eli speech privilege set to `{self.eliban}`', color=0x202225)
+                    embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
+                    await ctx.respond(embed=embed, ephemeral=True)
+
+            else: cmd = f'help (inferred from {cmd})'; await ctx.respond(embed=debug_help())
         else:
             embed = discord.Embed(title='', description='debug not accessible to you!', color=0x202225)
             embed.add_field(name=discord.Embed.Empty, value='[support server](https://discord.gg/xzAuXPz)\n[poppy\'s github](https://github.com/ignpoppyseed)', inline=False)
@@ -1457,6 +1476,162 @@ class cog_all(commands.Cog):
             await ctx.respond(embed=embed)
             return
 
+    @commands.slash_command(name='gn-chat', description='say goodnight to chat')
+    async def _gn_chat(self, ctx):
+        load_dotenv()
+        tenorToken = os.getenv('TENOR')
+        query, limit = 'gn chat', '10'
+        try:
+            res = requests.get(f'https://tenor.googleapis.com/v2/search?q={query}&limit={limit}&random=true&media_filter=gif&key={tenorToken}').json()['results'][0]['media_formats']['gif']['url']
+            embed = discord.Embed(title=discord.Embed.Empty, description=discord.Embed.Empty)
+            embed.set_image(url=res)
+            embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
+            await ctx.respond(embed=embed)
+        except Exception as e:
+            embed = discord.Embed(title=discord.Embed.Empty, description=f'**TenorAPI Inaccessible**: {e}\nUse </reportissue:1041952478540877826> or contact the developer!')
+            embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
+            await ctx.respond(embed=embed)
+
+    @commands.slash_command(name='gm-chat', description='say goodmorning to chat')
+    async def _gm_chat(self, ctx):
+        load_dotenv()
+        tenorToken = os.getenv('TENOR')
+        query, limit = 'hello gm chat', '10'
+        try:
+            res = requests.get(f'https://tenor.googleapis.com/v2/search?q={query}&limit={limit}&random=true&media_filter=gif&key={tenorToken}').json()['results'][0]['media_formats']['gif']['url']
+            embed = discord.Embed(title=discord.Embed.Empty, description=discord.Embed.Empty)
+            embed.set_image(url=res)
+            embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
+            await ctx.respond(embed=embed)
+        except Exception as e:
+            embed = discord.Embed(title=discord.Embed.Empty, description=f'**TenorAPI Inaccessible**: {e}\nUse </reportissue:1041952478540877826> or contact the developer!')
+            embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
+            await ctx.respond(embed=embed)
+
+    emoji = discord.SlashCommandGroup("emoji", "emoji related commands")
+
+    @emoji.command(name='get', description='get info about an emoji')
+    async def _emoji_get(self, ctx, emoji: Option(str, 'the emoji to steal', required=True, min_length=23, max_length=57)):
+        split_emoji = emoji.split(':')
+        emoji_id = int(emoji.split(':')[2][:-1])
+        if split_emoji[0] == '<a': animated = True
+        else: animated = False
+
+        download_button = Button(label='download emoji', style=discord.ButtonStyle.link, url=f'https://cdn.discordapp.com/emojis/{emoji_id}.png')
+        view = View(timeout=180, disable_on_timeout=True)
+        view.add_item(download_button)
+
+        embed = discord.Embed(title=discord.Embed.Empty, description=discord.Embed.Empty)
+        embed.add_field(name='emoji name', value=f':{split_emoji[1]}:', inline=True)
+        embed.add_field(name='animated?', value=animated, inline=True)
+        embed.add_field(name='emoji id', value=f'`{emoji_id}`', inline=True)
+        embed.add_field(name='url', value=f'https://cdn.discordapp.com/emojis/{emoji_id}.png', inline=False)
+        embed.set_image(url=f'https://cdn.discordapp.com/emojis/{emoji_id}.png')
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
+        await ctx.respond(embed=embed, view=view)
+
+    @commands.slash_command(name='shorten-url', description='shorten a url using is.gd')
+    async def _shorten_url(self, ctx, url: Option(str, 'the url to shorten', required=True)):
+        await ctx.defer()
+        try:
+            res = requests.get(f'https://is.gd/create.php?format=simple&url={url}').text
+            if res == 'Error: Please enter a valid URL to shorten':
+                embed = discord.Embed(title=discord.Embed.Empty, description=f'**InvalidURLError**: `{url}` is not a valid URL!', color=0x202225)
+                embed.set_author(name=f'\u200b', icon_url='https://raw.githubusercontent.com/ignpoppyseed/ignpoppyseed/main/img/x_tossface.png')
+                embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
+                await ctx.respond(embed=embed, ephemeral=True)
+            elif res.startswith('https://is.gd/'):
+                embed = discord.Embed(title=discord.Embed.Empty, description=f'shortened url: {res}')
+                embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
+                await ctx.respond(embed=embed)
+        except Exception as e:
+            embed = discord.Embed(title=discord.Embed.Empty, description=f'**ShortenURLError**: {e}\nUse </reportissue:0> or contact the developer!', color=0x202225)
+            embed.set_author(name=f'\u200b', icon_url='https://raw.githubusercontent.com/ignpoppyseed/ignpoppyseed/main/img/x_tossface.png')
+            embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
+            await ctx.respond(embed=embed, ephemeral=True)
+
+    @commands.slash_command(name='lyrics', description='get lyrics of a song from musixmatch')
+    async def _lyrics(self, ctx, track_title: Option(str, 'the name of the track', required=True), artist_name: Option(str, 'the name of the artist', required=False, default=None)):
+        await ctx.defer()
+        try:
+            load_dotenv()
+            musixmatchToken = os.getenv('MUSIX')
+            if artist_name is not None:
+                artist_name = '&q_artist='+artist_name
+            res = requests.get(f'https://api.musixmatch.com/ws/1.1/track.search?q_track={track_title}{artist_name}&apikey={musixmatchToken}').json()
+            if res['message']['header']['status_code'] == 200:
+                res_ref = res['message']['body']
+                if res_ref['track_list'] == []: 
+                    embed = discord.Embed(title=discord.Embed.Empty, description=f'No lyrics found! ❌')
+                    embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
+                    await ctx.respond(embed=embed)
+                else:
+                    first_result = res_ref['track_list'][0]['track']
+                    track_name = first_result['track_name']
+                    track_artist = first_result['artist_name']
+                    album_name = first_result['album_name']
+                    org_track_url = first_result['track_share_url'].split('?')[0]
+                    explicit = first_result['explicit']
+                    track_id = first_result['track_id']
+                    track_has_lyr = first_result['has_lyrics']
+                    lyr_copyright = None
+                    lyr_title = 'lyrics'
+
+                    res = requests.get(f'https://is.gd/create.php?format=simple&url={org_track_url}').text
+                    if res.startswith('https://is.gd/'): track_url = res
+                    else: track_url = org_track_url
+
+                    if track_has_lyr == 0: lyr_desc = 'unable to find official lyrics for this song, but it\'s still in the database. try clicking the song title!'
+                    elif track_has_lyr == 1:
+                        res = requests.get(f'https://api.musixmatch.com/ws/1.1/track.lyrics.get?track_id={track_id}&apikey={musixmatchToken}').json()['message']['body']['lyrics']
+                        lyr_desc = res['lyrics_body'].split('\n\n******* This Lyrics is NOT for Commercial use *******')[0]
+                        if explicit == 1: lyr_desc = 'the lyrics are censored because they\'re explicit. click to reveal!\n||'+lyr_desc+'||'
+                        lyr_copyright = '\nLyrics Provided by www.musixmatch.com. Not for comercial use.'
+                        lyr_title = 'lyrics (clipped to first 30%)'
+                    embed = discord.Embed(title=f'{track_name} - {track_artist}', description=discord.Embed.Empty, url=org_track_url)
+                    embed.add_field(name='album name', value=album_name, inline=True)
+                    if explicit == 0: explicit = 'no'
+                    elif explicit == 1: explicit = 'yes'
+                    embed.add_field(name='explicit?', value=explicit, inline=True)
+                    embed.add_field(name='MusixMatch URL', value=track_url, inline=True)
+                    embed.add_field(name=lyr_title, value=lyr_desc, inline=False)
+                    embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}{lyr_copyright}', icon_url=f'{self.bot.user.avatar.url}')
+                    await ctx.respond(embed=embed)
+            else:
+                status = res['message']['header']['status_code']
+                embed = discord.Embed(title=discord.Embed.Empty, description=f'**MusixMatchAPI Inaccessible**: status: {status}\nUse </reportissue:1041952478540877826> or contact the developer!')
+                embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
+                await ctx.respond(embed=embed)
+        except Exception as e:
+            embed = discord.Embed(title=discord.Embed.Empty, description=f'**LyricsError**: {e}\nUse </reportissue:0> or contact the developer!', color=0x202225)
+            embed.set_author(name=f'\u200b', icon_url='https://raw.githubusercontent.com/ignpoppyseed/ignpoppyseed/main/img/x_tossface.png')
+            embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
+            await ctx.respond(embed=embed, ephemeral=True)
+
+    @commands.slash_command(name='word-counter', description='count the words in a block of text')
+    async def _word_counter(self, ctx, text: Option(str, 'the text to count the words of', required=True)):
+        await ctx.defer()
+        word_count = str(len(text.split(' ')))
+        char_count = str(len(text))
+        embed = discord.Embed(title=discord.Embed.Empty, description=discord.Embed.Empty)
+        embed.add_field(name='words', value=word_count, inline=True)
+        embed.add_field(name='characters', value=char_count, inline=True)
+        embed.add_field(name='text', value=text, inline=False)
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
+        await ctx.respond(embed=embed)
+    
+    @commands.slash_command(name='character-counter', description='count the characters in a block of text')
+    async def _character_counter(self, ctx, text: Option(str, 'the text to count the characters of', required=True)):
+        await ctx.defer()
+        word_count = str(len(text.split(' ')))
+        char_count = str(len(text))
+        embed = discord.Embed(title=discord.Embed.Empty, description=discord.Embed.Empty)
+        embed.add_field(name='characters', value=char_count, inline=True)
+        embed.add_field(name='words', value=word_count, inline=True)
+        embed.add_field(name='text', value=text, inline=False)
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
+        await ctx.respond(embed=embed)
+    
 def setup(bot):
     bot.add_cog(cog_all(bot))
     print('cog.all loaded')

@@ -11,3 +11,4 @@ topggpy==1.4.0
 dice==3.1.2
 #pyttsx3==2.71
 gTTS==2.30
+beautifulsoup4==4.11.1

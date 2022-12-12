@@ -15,7 +15,6 @@ reportLock = []
 class cog_events(commands.Cog):
     def __init__(self, bot, *args, **kwargs):
         self.bot = bot
-        self.bot.topggpy = topgg.DBLClient(self.bot, topggToken)
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -40,17 +39,17 @@ class cog_events(commands.Cog):
                 egirlEmbed.add_field(name=f'extra', value=f'{tip[random.randrange(0, len(tip))]}', inline=False)
                 egirlEmbed.set_footer(text=f'requested by {message.author}', icon_url=f'{message.author.avatar.url}'),
                 await message.reply(embed=egirlEmbed, mention_author=False)
-        db = sqlite3.connect("database.sqlite")
-        cursor = db.cursor()
-        cursor.execute(f"SELECT goodbye_channel FROM data WHERE server_id = {message.guild.id}")
-        result = cursor.fetchone()
-        try:
-            if result[0] is not None:
-                if random.randrange(0, 20+1) == 5:
+        if random.randrange(0, 20+1) == 5:
+            db = sqlite3.connect("database.sqlite")
+            cursor = db.cursor()
+            cursor.execute(f"SELECT uwumode FROM data WHERE server_id = {message.guild.id}")
+            result = cursor.fetchone()
+            try:
+                if result[0] is not None:
                     messageables = ['UwU', 'OwO', '>w<', '^w^']
                     await message.channel.send(messageables[random.randrange(0, len(messageables))], mention_author=False)
-            else: return
-        except Exception as e: return
+                else: return
+            except: return
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
