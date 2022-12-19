@@ -20,7 +20,7 @@ bot = discord.AutoShardedBot(case_insensitive=True, command_prefix=";", intents=
 egirl_cogs = ['cog.all', 'cog.config', 'cog.events', 'cog.counting']
 
 debugMode = False
-egirlVersion = '2.2.0'
+egirlVersion = '2.2.1'
 loggingChannel = 994443884878901378
 reportManager = 402569003903483904
 reportManagerName = 'poppy#0001'

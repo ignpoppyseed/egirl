@@ -55,7 +55,7 @@ class cog_all(commands.Cog):
         await asyncio.sleep(30)
         await self.bot.change_presence(status=discord.Status.online, activity=discord.Activity(type=discord.ActivityType.competing, name="egirl contests?"))
         await asyncio.sleep(30)
-        await self.bot.change_presence(status=discord.Status.online, activity=discord.Activity(type=discord.ActivityType.listening, name="to girlboss podcasts"))
+        await self.bot.change_presence(status=discord.Status.online, activity=discord.Activity(type=discord.ActivityType.listening, name="girlboss podcasts"))
         await asyncio.sleep(30)
 
     @tasks.loop(minutes=10)
@@ -92,7 +92,7 @@ class cog_all(commands.Cog):
                 await ctx.respond('Failed to embed message! That is not a valid hex code! ❌', ephemeral=True)
             message = message.replace('\\n', '\n')
             msgEmbed = discord.Embed(title=title, url=titleurl, description=message, color=colorHex)
-            msgEmbed.set_footer(text=f'egirl', icon_url=self.bot.user.display_avatar.url)
+            msgEmbed.set_footer(text=f'egirl embed', icon_url=self.bot.user.display_avatar.url)
             msgEmbed.set_thumbnail(url=thumbnail)
             msgEmbed.set_image(url=setimg)
             try:
@@ -134,7 +134,7 @@ class cog_all(commands.Cog):
                 return
             try:
                 embedDL = grabbedMessage.embeds[0].to_dict()
-                if embedDL['footer']['text'] != 'egirl':
+                if embedDL['footer']['text'] != 'egirl embed':
                     await ctx.respond('Please select a message that contains an egirl embed! ❌', ephemeral=True)
                     return
             except:
@@ -210,10 +210,10 @@ class cog_all(commands.Cog):
             '★★★★★★★★★★★★★★★★★★★★\n20/10 Cuteness',
         ]
         cuteR = random.randrange(0, len(cuteOpt))
-        cuteEmbed = discord.Embed(title=f'How cute is {user}?', description=cuteOpt[cuteR], color=0x202225)
-        cuteEmbed.set_thumbnail(url=user.display_avatar.url)
-        cuteEmbed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}'),
-        await ctx.respond(embed=cuteEmbed)
+        embed = discord.Embed(title=f'How cute is {user}?', description=cuteOpt[cuteR], color=0x202225)
+        embed.set_thumbnail(url=user.display_avatar.url)
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
+        await ctx.respond(embed=embed)
 
 
     @commands.slash_command(
@@ -223,7 +223,7 @@ class cog_all(commands.Cog):
     async def _possum(self, ctx):
         embed = discord.Embed(title=f'<possum screaming>', description='', color=0x202225)
         embed.set_image(url=requests.get('https://api.cloverbrand.xyz/random').json()['url'])
-        embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}'),
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
     @commands.slash_command(
@@ -245,15 +245,15 @@ class cog_all(commands.Cog):
         else:
             titleName = ''
         if type == 'skin':
-            helmEmbed = discord.Embed(title=f'{username}\'s Skin', description='', color=0x202225)
-            helmEmbed.set_image(url='https://minotar.net/skin/' + username + '.png')
-            helmEmbed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}'),
-            await ctx.respond(embed=helmEmbed)
+            embed = discord.Embed(title=f'{username}\'s Skin', description='', color=0x202225)
+            embed.set_image(url='https://minotar.net/skin/' + username + '.png')
+            embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
+            await ctx.respond(embed=embed)
         else:
-            helmEmbed = discord.Embed(title=f'{username}\'s {titleName}', description='', color=0x202225)
-            helmEmbed.set_image(url='https://minotar.net/' + type + '/' + username + '/' + str(size) + '.png')
-            helmEmbed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}'),
-            await ctx.respond(embed=helmEmbed)
+            embed = discord.Embed(title=f'{username}\'s {titleName}', description='', color=0x202225)
+            embed.set_image(url='https://minotar.net/' + type + '/' + username + '/' + str(size) + '.png')
+            embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
+            await ctx.respond(embed=embed)
 
     @commands.slash_command(name="vs", description="stage a battle between two users!",)
     async def _vs(self, ctx, player1: Option(discord.Member, "player 1", required=True), player2: Option(discord.Member, "player 2", required=True),):
@@ -298,13 +298,13 @@ class cog_all(commands.Cog):
         embed.add_field(name = "egirl", value = "```\n- egirl\n- help\n- invite\n- reportissue```", inline = True)
         embed.add_field(name = "config", value = "```\n- config welcome\n- config goodbye\n- config uwumode```", inline = True)
         embed.add_field(name = "images", value = "```\n- possum\n- dog\n- cat\n- imagegen clyde\n- imagegen tweet```", inline = True)
-        embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
     @commands.slash_command(name='egirl', description='bot info')
     async def _egirl(self, ctx):
-        egirlEmbed = discord.Embed(title='about egirl', url='https://cloverbrand.xyz/egirl/', color=0x202225)
-        egirlEmbed.add_field(name=f'running egirl v{egirlVersion}', value=
+        embed = discord.Embed(title='about egirl', url='https://cloverbrand.xyz/egirl/', color=0x202225)
+        embed.add_field(name=f'running egirl v{egirlVersion}', value=
             f'**[invite !](https://cloverbrand.xyz/egirl/invite/)** | **[website !](https://cloverbrand.xyz)** | **[vote !](https://top.gg/bot/825415772075196427/vote)**\n\
             egirl is constantly being updated!\n\
             if you have an issue, contact the developer @ poppy#0001 or egirl@cloverbrand.xyz\n\
@@ -317,15 +317,15 @@ class cog_all(commands.Cog):
             '**fact:** trans rights are human rights!',
             '**fact:** egirl\'s favorite color is \#202225'
         ]
-        egirlEmbed.add_field(name=f'extra', value=f'{tip[random.randrange(0, len(tip))]}', inline=False)
-        egirlEmbed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}'),
-        await ctx.respond(embed=egirlEmbed)
+        embed.add_field(name=f'extra', value=f'{tip[random.randrange(0, len(tip))]}', inline=False)
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
+        await ctx.respond(embed=embed)
 
     @commands.slash_command(name='invite', description='invite egirl to your server')
     async def _invite(self, ctx):
-        inviteEmbed = discord.Embed(title='invite egirl', url='https://discord.com/api/oauth2/authorize?client_id=825415772075196427&permissions=8&scope=bot%20applications.commands', description='invite egirl if you want to be cool', color=0x202225)
-        inviteEmbed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}'),
-        await ctx.respond(embed=inviteEmbed)
+        embed = discord.Embed(title='invite egirl', url='https://discord.com/api/oauth2/authorize?client_id=825415772075196427&permissions=8&scope=bot%20applications.commands', description='invite egirl if you want to be cool', color=0x202225)
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
+        await ctx.respond(embed=embed)
 
     @commands.slash_command(name='slaydetector', description='check if someone is slaying')
     async def _slaydetector(self, ctx, user: Option(discord.Member, "user to check for slaying", required=False)):
@@ -333,10 +333,10 @@ class cog_all(commands.Cog):
         slayOpt = [
             f'Yes, <@{user.id}> is slaying!', f'No, <@{user.id}> is not slaying :<'
         ]
-        cuteEmbed = discord.Embed(title=f'Is {user.display_name} slaying?', description=slayOpt[random.randrange(0, len(slayOpt))], color=0x202225)
-        cuteEmbed.set_thumbnail(url=user.display_avatar.url)
-        cuteEmbed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}'),
-        await ctx.respond(embed=cuteEmbed)
+        embed = discord.Embed(title=f'Is {user.display_name} slaying?', description=slayOpt[random.randrange(0, len(slayOpt))], color=0x202225)
+        embed.set_thumbnail(url=user.display_avatar.url)
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
+        await ctx.respond(embed=embed)
 
     @commands.slash_command(name='8ball',
                     description='ask a yes or no question, recieve an answer!')
@@ -360,8 +360,8 @@ class cog_all(commands.Cog):
                             icon_url=f'{ctx.author.avatar.url}'),
             await ctx.respond(embed=Embed, ephemeral=True)
         else:
-            Embed = discord.Embed(title=f'{ctx.author} asks: {question}?', description=f'egirl says: {opt[random.randrange(0, len(opt))]}', color=0x202225)
-            Embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}'),
+            embed = discord.Embed(title=f'{ctx.author} asks: {question}?', description=f'egirl says: {opt[random.randrange(0, len(opt))]}', color=0x202225)
+            embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
             await ctx.respond(embed=Embed)
 
     roleplay = discord.SlashCommandGroup("rp", "roleplay cmds")
@@ -566,7 +566,7 @@ class cog_all(commands.Cog):
             embed.set_image(url=requests.get(f'https://dog.ceo/api/breed/{breed}/images/random/1').json()['message'][0])
         elif breed == None:
             embed.set_image(url=requests.get(f'https://dog.ceo/api/breeds/image/random/1').json()['message'][0])
-        embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}'),
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
     @commands.slash_command(
@@ -674,7 +674,7 @@ class cog_all(commands.Cog):
     async def _cat(self, ctx):
         embed = discord.Embed(title=f'meow!', description='', color=0x202225)
         embed.set_image(url=requests.get(f'https://api.thecatapi.com/v1/images/search').json()[0]['url'])
-        embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}'),
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
     @commands.slash_command(
@@ -699,7 +699,7 @@ class cog_all(commands.Cog):
         R = random.randrange(0, len(opt))
         embed = discord.Embed(title=f'How boopable is {user}?', description=opt[R], color=0x202225)
         embed.set_thumbnail(url=user.display_avatar.url)
-        embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
     @commands.slash_command(name="tod", description="truth or dare")
@@ -1115,12 +1115,13 @@ class cog_all(commands.Cog):
                 await ctx.respond(embed=embed)
 
             elif cmd.startswith('say '):
-                await ctx.defer()
-                text = cmd.split(' ', 1)[1]
-                embed = discord.Embed(title='', description=f'sent! ✅', color=0x202225)
+                embed = discord.Embed(title='', description=f'thinking... 🕑', color=0x202225)
                 embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
+                await ctx.response.send_message(embed=embed, ephemeral=True)
+                text = cmd.split(' ', 1)[1]
                 await ctx.channel.send(text)
-                await ctx.respond(embed=embed, ephemeral=True)
+                embed.description='sent! ✅'
+                await ctx.edit(embed=embed)
             elif cmd == 'shutupeli':
                 await ctx.defer()
                 if self.eliban == True:
@@ -1143,17 +1144,17 @@ class cog_all(commands.Cog):
             return
 
     @commands.slash_command(name='choose', description='choose between multiple options, seperated by commands')
-    async def _choose(ctx, choices: Option(str, 'seperate choices with commas', required=True)):
+    async def _choose(self, ctx, choices: Option(str, 'seperate choices with commas', required=True)):
         choices = choices.split(',')
         embed = discord.Embed(title=f'egirl\'s Choice', description='I choose: '+choices[random.randrange(0, len(choices))], color=0x202225)
-        embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
     @commands.slash_command(name='animatedstorytitle', description='AI generated animated story title')
     async def _animatedstorytitle(self, ctx):
         res = requests.get('https://animatedstorytitles.com/api/title').json()['title']
         embed = discord.Embed(title=f'egirl\'s Animated Story Title', description=res, color=0x202225)
-        embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
     imagegen = discord.SlashCommandGroup("imagegen", "image gen commands")
@@ -1163,7 +1164,7 @@ class cog_all(commands.Cog):
         res = requests.get(f'https://nekobot.xyz/api/imagegen?type=clyde&text={text}').json()['message']
         embed = discord.Embed(title=f'', description=f'**message from clyde!**', color=0x202225)
         embed.set_image(url=res)
-        embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
     @imagegen.command(name='tweet', description='make a fake tweet')
@@ -1173,7 +1174,7 @@ class cog_all(commands.Cog):
         res = requests.get(f'https://nekobot.xyz/api/imagegen?type=tweet&text={text}&username={username}').json()['message']
         embed = discord.Embed(title=f'', description=f'**new tweet from {username}!**', color=0x202225)
         embed.set_image(url=res)
-        embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
     @commands.slash_command(name='jortsweather', description='decide if it\'s jorts or jeans weather')
@@ -1187,7 +1188,7 @@ class cog_all(commands.Cog):
                 elif current_temperature < 72:
                     dec = 'jeans'
                 embed = discord.Embed(title=f'egirl\'s Jorts Decider', description=f'In {apiresponse["name"]}, the current temperature is: {current_temperature}°F\nThat means it\'s **{dec}** weather!', color=0x202225)
-                embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+                embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
                 await ctx.respond(embed=embed)
             except KeyError:
                 await ctx.respond('City not found! ❌', ephemeral=True)
@@ -1215,7 +1216,7 @@ class cog_all(commands.Cog):
 
         embed = discord.Embed(title=f'egirl\'s Password Generator', description=f'Generated password: `{r}`', color=0x202225)
         embed.set_author(name='egirl will never store your password')
-        embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond('`'+r+'`', embed=embed, ephemeral=True)
 
     @commands.slash_command(name='profile', description='get the profile of a user')
@@ -1291,7 +1292,7 @@ class cog_all(commands.Cog):
         elif bannerState == 2:
             embed.add_field(name='Banner', value='Accent color')
         embed.set_thumbnail(url=user.display_avatar.url)
-        embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
     nick = discord.SlashCommandGroup("nick", "nickname related commands")
@@ -1308,7 +1309,7 @@ class cog_all(commands.Cog):
                 await user.edit(nick=nickname)
                 newNick = user.nick
                 embed = discord.Embed(title=f'{user}\'s Nickname Updated!', description=f'Old nickname: {oldNick}\nNew nickname: {newNick}', color=0x202225)
-                embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+                embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
                 await ctx.respond(embed=embed)
             else:
                 if ctx.author.guild_permissions.manage_nicknames:
@@ -1319,7 +1320,7 @@ class cog_all(commands.Cog):
                     await user.edit(nick=nickname)
                     newNick = user.nick
                     embed = discord.Embed(title=f'{user}\'s Nickname Updated!', description=f'Old nickname: {oldNick}\nNew nickname: {newNick}', color=0x202225)
-                    embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+                    embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
                     await ctx.respond(embed=embed)
                 else: await ctx.respond('This command requires the \'Manage Nicknames\' permission! ❌', ephemeral=True)
         except Exception as e:
@@ -1334,14 +1335,14 @@ class cog_all(commands.Cog):
                 oldNick = user.nick
                 await user.edit(nick=None)
                 embed = discord.Embed(title=f'{user}\'s Nickname Reset!', description=f'Old nickname: {oldNick}\nNew name: {user.name}', color=0x202225)
-                embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+                embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
                 await ctx.respond(embed=embed)
             else:
                 if ctx.author.guild_permissions.manage_nicknames:
                     oldNick = user.nick
                     await user.edit(nick=None)
                     embed = discord.Embed(title=f'{user}\'s Nickname Reset!', description=f'Old nickname: {oldNick}\nNew name: {user.name}', color=0x202225)
-                    embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}')
+                    embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
                     await ctx.respond(embed=embed)
                 else: await ctx.respond('This command requires the \'Manage Nicknames\' permission! ❌', ephemeral=True)
         except Exception as e:
@@ -1390,7 +1391,7 @@ class cog_all(commands.Cog):
     roll = discord.SlashCommandGroup("roll", "dice rolling commands")
     
     @roll.command(name='expression', description='roll a dice!')
-    async def _roll_expression(ctx, expression: Option(str, 'the expression to roll', required=True), hidden: Option(bool, 'have the result hidden from other users', required=False, default=False)):
+    async def _roll_expression(self, ctx, expression: Option(str, 'the expression to roll', required=True), hidden: Option(bool, 'have the result hidden from other users', required=False, default=False)):
         if hidden == True:
             eph = True
         else:
@@ -1439,11 +1440,15 @@ class cog_all(commands.Cog):
             [ChilliHero QOTD](https://chillihero.api.stdlib.com/qotd@0.1.3/question/)\n\
             [dog.ceo API](https://dog.ceo/api)\n\
             [The Cat API](https://thecatapi.com/)\n\
+            [MusixMatch API](https://developer.musixmatch.com/)\n\
+            [Truth or Dare Bot API](https://docs.truthordarebot.xyz/api-docs)\n\
+            [Tenor API](https://docs.truthordarebot.xyz/api-docs)\n\
             [Hypixel API](https://api.hypixel.net/)\n\
             [Mojang API](https://api.mojang.com)\n', inline=False)
         embed.add_field(name='How to Start', value=f'Remember: Anyone can program something! Here\'s a few resources to help you begin!\n\
             [Repl.it](https://replit.com/) - A useful tool to run code online (which even works on phones!)\n\
             [W3Schools](https://www.w3schools.com/) - Free online courses for coding\n\
+            [Visual Studio Code Web](https://vscode.dev/) - Free fully online code editor\n\
             [Code With Swastik](https://www.youtube.com/@CodeWithSwastik) - Fantastic PyCord/discord.py video tutorials\n\
             [Worn Off Keys](https://www.youtube.com/@WornOffKeys) - Fantastic discord.js video tutorials\n\
             ', inline=False)
@@ -1514,19 +1519,24 @@ class cog_all(commands.Cog):
     async def _emoji_get(self, ctx, emoji: Option(str, 'the emoji to steal', required=True, min_length=23, max_length=57)):
         split_emoji = emoji.split(':')
         emoji_id = int(emoji.split(':')[2][:-1])
-        if split_emoji[0] == '<a': animated = True
+        if '<a' in split_emoji[0]: animated = True
         else: animated = False
 
-        download_button = Button(label='download emoji', style=discord.ButtonStyle.link, url=f'https://cdn.discordapp.com/emojis/{emoji_id}.png')
-        view = View(timeout=180, disable_on_timeout=True)
+        if animated == True: ext = 'gif'
+        else: ext = 'png'
+
+        emoji_url = f'https://cdn.discordapp.com/emojis/{emoji_id}.{ext}'
+
+        download_button = Button(label='download emoji', style=discord.ButtonStyle.link, url=emoji_url)
+        view = View(timeout=None)#timeout=180, disable_on_timeout=True)
         view.add_item(download_button)
 
         embed = discord.Embed(title=discord.Embed.Empty, description=discord.Embed.Empty)
         embed.add_field(name='emoji name', value=f':{split_emoji[1]}:', inline=True)
         embed.add_field(name='animated?', value=animated, inline=True)
         embed.add_field(name='emoji id', value=f'`{emoji_id}`', inline=True)
-        embed.add_field(name='url', value=f'https://cdn.discordapp.com/emojis/{emoji_id}.png', inline=False)
-        embed.set_image(url=f'https://cdn.discordapp.com/emojis/{emoji_id}.png')
+        embed.add_field(name='url', value=emoji_url, inline=False)
+        embed.set_image(url=emoji_url)
         embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed, view=view)
 
@@ -1574,7 +1584,7 @@ class cog_all(commands.Cog):
                     explicit = first_result['explicit']
                     track_id = first_result['track_id']
                     track_has_lyr = first_result['has_lyrics']
-                    lyr_copyright = None
+                    lyr_copyright = ''
                     lyr_title = 'lyrics'
 
                     res = requests.get(f'https://is.gd/create.php?format=simple&url={org_track_url}').text
@@ -1585,9 +1595,9 @@ class cog_all(commands.Cog):
                     elif track_has_lyr == 1:
                         res = requests.get(f'https://api.musixmatch.com/ws/1.1/track.lyrics.get?track_id={track_id}&apikey={musixmatchToken}').json()['message']['body']['lyrics']
                         lyr_desc = res['lyrics_body'].split('\n\n******* This Lyrics is NOT for Commercial use *******')[0]
-                        if explicit == 1: lyr_desc = 'the lyrics are censored because they\'re explicit. click to reveal!\n||'+lyr_desc+'||'
+                        if explicit == 1: lyr_desc = 'these lyrics are censored because they\'re explicit. click to reveal!\n||'+lyr_desc+'||'
                         lyr_copyright = '\nLyrics Provided by www.musixmatch.com. Not for comercial use.'
-                        lyr_title = 'lyrics (clipped to first 30%)'
+                        lyr_title = 'lyrics (clipped to first 30%, click the embed title to view full lyrics!)'
                     embed = discord.Embed(title=f'{track_name} - {track_artist}', description=discord.Embed.Empty, url=org_track_url)
                     embed.add_field(name='album name', value=album_name, inline=True)
                     if explicit == 0: explicit = 'no'
