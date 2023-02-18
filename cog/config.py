@@ -83,6 +83,10 @@ class cog_config(commands.Cog):
             embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
             await ctx.respond(embed=embed, ephemeral=True)
 
+    @config_welcome.command(name='message_set', description='set the message sent on user join. use {user} for the user\'s mention.')
+    async def _welcome_message_set(self, ctx, message):
+        pass
+
     @config_welcome.command(name='remove_channel', description='remove and disable the welcome channel')
     async def _remove_welcome_channel(self, ctx):
         if ctx.author.guild_permissions.administrator:

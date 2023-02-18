@@ -79,10 +79,10 @@ class cog_events(commands.Cog):
                 draw.text(((templateWidth / 2) + 3, (templateHeight / 2) + 63), f'{member.name}#{member.discriminator}', (0, 0, 0, 80), anchor="mm", font=welcFont)
                 draw.text((templateWidth / 2, (templateHeight / 2) + 60), f'{member.name}#{member.discriminator}', (255, 255, 255), anchor="mm", font=welcFont)
                 img = Image.alpha_composite(img, textLayer)
-                img.save(f'welcome/{member.id}.png')
+                img.save(f'temp/welcome-{member.id}.png')
                 #build the welcome embed
                 welcomeEmbed = discord.Embed(title=f'', description=f'welcome {member.mention}!', color=0x202225)
-                embedSendFile = discord.File(f'welcome/{member.id}.png', filename='welcome!.png')
+                embedSendFile = discord.File(f'temp/welcome-{member.id}.png', filename='welcome.png')
                 welcomeEmbed.set_image(url='attachment://welcome.png')
                 # send the welcome embed
                 channel = self.bot.get_channel(int(welcomeChannel))
@@ -107,6 +107,15 @@ class cog_events(commands.Cog):
                 await channel.send(embed=embed)
             else: return
         except Exception as e: return
+
+'''    @commands.Cog.listener()
+    async def on_autopost_success(self):
+        print(f"updated guild count: ({self.bot.topggpy.guild_count})")
+
+    @commands.Cog.listener()
+    async def on_autopost_error(self, exception):
+        if exception == 'Top.gg API token not provided': print('no topgg token')
+        else: print(f"encountered whoopsie when posting server count (top.gg)\nError: {exception}")'''
 
 def setup(bot):
     bot.add_cog(cog_events(bot))

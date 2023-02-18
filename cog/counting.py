@@ -13,31 +13,53 @@ class cog_counting(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         try:
-            cursor.execute(f"SELECT current_count FROM counting WHERE server_id = {str(message.guild.id)}")
-            try: count = int(''.join(cursor.fetchone()))
-            except TypeError: count = int(cursor.fetchone())
-        except:
+            cursor.execute(f"SELECT channel_id FROM counting WHERE server_id = {str(message.guild.id)}")
+            try: counting_channel_id = int(''.join(cursor.fetchone()))
+            except TypeError: counting_channel_id = int(cursor.fetchone())
+        except Exception as e:
             return
-        if count is None:
-            return
-        else:
-            try: int(message.content) 
-            except: return
-            cursor.execute(f"SELECT last_author FROM counting WHERE server_id = {str(message.guild.id)}")
-            try: last_author = ''.join(cursor.fetchone())
-            except: last_author = '000'
-            cursor.execute(f"SELECT reset_type FROM counting WHERE server_id = {str(message.guild.id)}")
-            reset_type = ''.join(cursor.fetchone())
-            if str(message.author.id) != last_author:
-                if int(message.content) == count+1:
-                    sql = ("UPDATE counting SET current_count = ? WHERE server_id = ?")
-                    val = (count+1, str(message.guild.id))
-                    cursor.execute(sql, val)
-                    sql = ("UPDATE counting SET last_author = ? WHERE server_id = ?")
-                    val = (str(message.author.id), str(message.guild.id))
-                    cursor.execute(sql, val)
-                    db.commit()
-                    await message.add_reaction("a:egirl_check:1047715534566854676")
+        if message.channel.id == counting_channel_id:
+            try:
+                cursor.execute(f"SELECT current_count FROM counting WHERE server_id = {str(message.guild.id)}")
+                try: count = int(''.join(cursor.fetchone()))
+                except TypeError: count = int(cursor.fetchone())
+            except:
+                return
+            if count is None:
+                return
+            else:
+                try: int(message.content) 
+                except: return
+                cursor.execute(f"SELECT last_author FROM counting WHERE server_id = {str(message.guild.id)}")
+                try: last_author = ''.join(cursor.fetchone())
+                except: last_author = '000'
+                cursor.execute(f"SELECT reset_type FROM counting WHERE server_id = {str(message.guild.id)}")
+                reset_type = ''.join(cursor.fetchone())
+                if str(message.author.id) != last_author:
+                    if int(message.content) == count+1:
+                        sql = ("UPDATE counting SET current_count = ? WHERE server_id = ?")
+                        val = (count+1, str(message.guild.id))
+                        cursor.execute(sql, val)
+                        sql = ("UPDATE counting SET last_author = ? WHERE server_id = ?")
+                        val = (str(message.author.id), str(message.guild.id))
+                        cursor.execute(sql, val)
+                        db.commit()
+                        await message.add_reaction("a:egirl_check:1047715534566854676")
+                    else:
+                        if reset_type == 'ignore_failure':
+                            await message.add_reaction("a:egirl_x:1047723503991930951")
+                        elif reset_type == 'reset_on_failure':
+                            sql = ("UPDATE counting SET current_count = ? WHERE server_id = ?")
+                            val = ('0', str(message.guild.id))
+                            cursor.execute(sql, val)
+                            sql = ("UPDATE counting SET last_author = ? WHERE server_id = ?")
+                            val = ("000", str(message.guild.id))
+                            cursor.execute(sql, val)
+                            db.commit()
+                            embed = discord.Embed(title=discord.Embed.Empty, description=f'{message.author.mention}({message.author}) ruined the count at **{str(count)}**! starting over at 0 <a:egirl_cat_headbang:1047718263842418719>', color=0x202225)
+                            embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
+                            await message.add_reaction("a:egirl_x:1047723503991930951")
+                            await message.reply(embed=embed, mention_author=False)
                 else:
                     if reset_type == 'ignore_failure':
                         await message.add_reaction("a:egirl_x:1047723503991930951")
@@ -53,21 +75,6 @@ class cog_counting(commands.Cog):
                         embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
                         await message.add_reaction("a:egirl_x:1047723503991930951")
                         await message.reply(embed=embed, mention_author=False)
-            else:
-                if reset_type == 'ignore_failure':
-                    await message.add_reaction("a:egirl_x:1047723503991930951")
-                elif reset_type == 'reset_on_failure':
-                    sql = ("UPDATE counting SET current_count = ? WHERE server_id = ?")
-                    val = ('0', str(message.guild.id))
-                    cursor.execute(sql, val)
-                    sql = ("UPDATE counting SET last_author = ? WHERE server_id = ?")
-                    val = ("000", str(message.guild.id))
-                    cursor.execute(sql, val)
-                    db.commit()
-                    embed = discord.Embed(title=discord.Embed.Empty, description=f'{message.author.mention}({message.author}) ruined the count at **{str(count)}**! starting over at 0 <a:egirl_cat_headbang:1047718263842418719>', color=0x202225)
-                    embed.set_footer(text = f'{self.bot.user.name}', icon_url=self.bot.user.display_avatar.url)
-                    await message.add_reaction("a:egirl_x:1047723503991930951")
-                    await message.reply(embed=embed, mention_author=False)
 
     counting = discord.SlashCommandGroup("counting", "counting config commands")
 
@@ -194,4 +201,4 @@ def setup(bot):
     bot.add_cog(cog_counting(bot))
     print('cog.counting loaded')
 def teardown(bot):
-    print('cog.other unloading')
+    print('cog.counting unloading')

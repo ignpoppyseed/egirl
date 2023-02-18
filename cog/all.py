@@ -20,10 +20,23 @@ class cog_all(commands.Cog):
 
     @commands.Cog.listener()
     async def on_connect(self):
-        self.stat_task.start()
-        self.wipeReportBan.start()
-        self.pfp_task.start()
-        self.topggStats.start()
+        try: 
+            self.stat_task.start()
+            print('started stat_task()')
+        except Exception as e: print(f'error starting stat_task()\ne: {e}')
+        try: 
+            self.wipeReportBan.start()
+            print('started wipeReportBan()')
+        except Exception as e: print(f'error starting wipeReportBan()\ne: {e}')
+        try: 
+            self.pfp_task.start()
+            print('started pfp_task()')
+        except Exception as e: print(f'error starting pfp_task()\ne: {e}')
+        try: 
+            self.topggStats.start()
+            print('started topggStats()')
+        except Exception as e: print(f'error starting topggStats()\ne: {e}')
+        #self.bot.topggpy = topgg.DBLClient(self.bot, topggToken, autopost=True, post_shard_count=False)
 
     @tasks.loop(minutes=30)
     async def pfp_task(self):
@@ -65,15 +78,13 @@ class cog_all(commands.Cog):
 
     @tasks.loop(minutes=30)
     async def topggStats(self):
-        self.bot.topggpy = topgg.DBLClient(self.bot, topggToken)
+        self.bot.topggpy = topgg.DBLClient(bot=self.bot, token=topggToken)
         try:
-            await self.bot.topggpy.post_guild_count()
+            await self.bot.topggpy.post_guild_count(guild_count=len(self.bot.guilds))
             print(f"updated guild count: ({self.bot.topggpy.guild_count})")
         except Exception as e:
-            if e == 'Top.gg API token not provided':
-                print('no topgg token')
-            else:
-                print(f"encountered whoopsie when posting server count (top.gg)\nError: {e}")
+            if e == 'Top.gg API token not provided': print('no topgg token')
+            else: print(f"encountered whoopsie when posting server count (top.gg)\nerror: {e}")
         await self.bot.topggpy.close()
 
     @commands.slash_command(name="message", description="embed message")
@@ -221,8 +232,8 @@ class cog_all(commands.Cog):
         description="random possum image",
     )
     async def _possum(self, ctx):
-        embed = discord.Embed(title=f'<possum screaming>', description='', color=0x202225)
-        embed.set_image(url=requests.get('https://api.cloverbrand.xyz/random').json()['url'])
+        embed = discord.Embed(title=f'<possum screaming>', url='https://possum-cc.github.io/', description='', color=0x202225)
+        embed.set_image(url=requests.get('https://ignpoppyseed.pythonanywhere.com/random').json()['url'])
         embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
@@ -293,11 +304,11 @@ class cog_all(commands.Cog):
         description= "**[invite !](https://cloverbrand.xyz/egirl/invite/)** | **[website !](https://cloverbrand.xyz)** | **[vote !](https://top.gg/bot/825415772075196427/vote)**",
         color = 0x202225)
         embed.add_field(name = "utility", value = "```\n- message\n- editmessage\n- nuke\n- kick\n- ban\n- nick set\n- nick reset\n- poll\n- qotd\n- profile\n- passwordgenerator\n- texttospeech\n- lyrics```", inline = True)
-        embed.add_field(name = "fun", value = "```\n- rp\n- 8ball\n- slaydetector\n- howcute\n- vs\n- rockpaperscissors\n- howboopable\n- wyr\n- nhie\n- tod\n- animatedstorytitle\n- jortsweather```", inline = True)
+        embed.add_field(name = "fun", value = "```\n- rp\n- 8ball\n- slaydetector\n- howcute\n- vs\n- rockpaperscissors\n- howboopable\n- wyr\n- nhie\n- tod\n- animatedstorytitle\n- jortsweather\n- ip-gen```", inline = True)
         embed.add_field(name = "other", value = "```\n- miner\n- hypixel\n- flip\n- roll expression\n- roll help\n- choose\n- formatting\n- gn-chat\n- gm-chat\n- emoji get\n- character-counter\n- word-counter```", inline = True)
         embed.add_field(name = "egirl", value = "```\n- egirl\n- help\n- invite\n- reportissue```", inline = True)
         embed.add_field(name = "config", value = "```\n- config welcome\n- config goodbye\n- config uwumode```", inline = True)
-        embed.add_field(name = "images", value = "```\n- possum\n- dog\n- cat\n- imagegen clyde\n- imagegen tweet```", inline = True)
+        embed.add_field(name = "images", value = "```\n- possum\n- dog\n- cat\n- imagegen clyde\n- imagegen tweet\n- imagegen ip-fortune-cookie```", inline = True)
         embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
@@ -338,8 +349,7 @@ class cog_all(commands.Cog):
         embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
 
-    @commands.slash_command(name='8ball',
-                    description='ask a yes or no question, recieve an answer!')
+    @commands.slash_command(name='8ball', description='ask a yes or no question, recieve an answer!')
     async def _8ball(self, ctx, question: Option(str, "yes or no question", required=True)):
         opt = [
             'It is certain', 'Without a doubt', 'You may rely on it',
@@ -351,18 +361,13 @@ class cog_all(commands.Cog):
             'Very doubtful', 'My reply is no'
         ]
         if len(question) > 219:
-            Embed = discord.Embed(
-                title=f'question too long!',
-                description=
-                f'your question is {len(question)-219} characters too long',
-                color=0x202225)
-            Embed.set_footer(text=f'requested by {ctx.author}',
-                            icon_url=f'{ctx.author.avatar.url}'),
-            await ctx.respond(embed=Embed, ephemeral=True)
+            embed = discord.Embed(title=f'question too long!', description=f'your question is {len(question)-219} characters too long', color=0x202225)
+            embed.set_footer(text=f'requested by {ctx.author}', icon_url=f'{ctx.author.avatar.url}'),
+            await ctx.respond(embed=embed, ephemeral=True)
         else:
             embed = discord.Embed(title=f'{ctx.author} asks: {question}?', description=f'egirl says: {opt[random.randrange(0, len(opt))]}', color=0x202225)
             embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
-            await ctx.respond(embed=Embed)
+            await ctx.respond(embed=embed)
 
     roleplay = discord.SlashCommandGroup("rp", "roleplay cmds")
 
@@ -433,7 +438,7 @@ class cog_all(commands.Cog):
 
     @roleplay.command(name='slap', description='slap someone')
     async def _rp_slap(self, ctx, user: Option(discord.Member, 'user to slap', required=True)):
-        embed = discord.Embed(title='', description=f'<@{ctx.author.id}> slap <@{user.id}>!', color=0x202225)
+        embed = discord.Embed(title='', description=f'<@{ctx.author.id}> slaps <@{user.id}>!', color=0x202225)
         embed.set_image(url=requests.get(f'{roleplay_api}slap').json()['url'])
         embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
@@ -839,8 +844,8 @@ class cog_all(commands.Cog):
                 rText += f
             else: rText += w + ' '
 
-        embed = discord.Embed(title=f'egirl\'s UwUifier', description=f'\u200b', color=0x202225)
-        embed.set_thumbnail(url=self.bot.user.avatar.url)
+        embed = discord.Embed(title='egirl\'s uwuifier', description=discord.Embed.Empty, color=0x202225)
+        #embed.set_thumbnail(url=self.bot.user.avatar.url)
         embed.add_field(name=f'Old Text', value=f'{text}', inline=False)
         embed.add_field(name=f'UwUified Text', value=f'{rText}', inline=False)
         try:
@@ -848,12 +853,10 @@ class cog_all(commands.Cog):
                 await ctx.respond(embed=embed, ephemeral=True)
                 webhook = await ctx.channel.create_webhook(name=ctx.author.name)
                 await webhook.send(f'{rText}', username=ctx.author.nick, avatar_url=ctx.author.avatar.url)
-                webhooks = await ctx.channel.webhooks()
-                for webhook in webhooks: 
-                    await webhook.delete()
+                await webhook.delete()
             if send_as_user == False:
                 await ctx.respond(embed=embed, ephemeral=True)
-        except: await ctx.respond('UwUification failed! Perhaps your message is too long?', ephemeral=True)
+        except Exception as e: await ctx.respond(f'UwUification failed! error: {e}', ephemeral=True)
 
     @commands.slash_command(name='nuke', description='hide or completely delete a channel')
     async def _nuke(self, ctx, 
@@ -880,7 +883,7 @@ class cog_all(commands.Cog):
 
     @commands.slash_command(name='kick', description='kick a member')
     async def _kick(self, ctx, member: Option(discord.Member, 'choose member to kick', required=True), reason: Option(str, 'reason displayed in audit log', required=True)):
-        if ctx.author.guild_permissions.administrator:
+        if ctx.author.guild_permissions.kick_members:
             try:
                 await member.kick(reason=reason)
                 await ctx.respond(f'**{member}** was kicked! ✅', ephemeral=True)
@@ -891,7 +894,7 @@ class cog_all(commands.Cog):
 
     @commands.slash_command(name='ban', description='ban a member')
     async def _ban(self, ctx, member: Option(discord.Member, 'choose member to ban', required=True), reason: Option(str, 'reason displayed in audit log', required=True)):
-        if ctx.author.guild_permissions.administrator:
+        if ctx.author.guild_permissions.ban_members:
             try:
                 await member.ban(reason=reason, delete_message_seconds=None, delete_message_days=None)
                 await ctx.respond(f'**{member}** was banned! ✅', ephemeral=True)
@@ -919,7 +922,6 @@ class cog_all(commands.Cog):
             else:
                 mention = role.mention
             embed = discord.Embed(title=f'egirl\'s Question of The Day', description=res, color=0x202225)
-            embed.set_thumbnail(url='https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/twitter/322/question-mark_2753.png')
             if channel == None:
                 await ctx.channel.send(mention, embed=embed)
                 await ctx.edit(content='done! ✅')
@@ -1466,14 +1468,14 @@ class cog_all(commands.Cog):
                 await ctx.respond(embed=embed)
                 return
             myobj = gtts.gTTS(text=text, lang='en', slow=False)
-            myobj.save(f'tts/{ctx.author.id}.mp3')
-            response_file = discord.File(f'tts/{ctx.author.id}.mp3', filename='generated_speech.mp3')
+            myobj.save(f'temp/tts-{ctx.author.id}.mp3')
+            response_file = discord.File(f'temp/tts-{ctx.author.id}.mp3', filename='generated_speech.mp3')
             embed = discord.Embed(title='egirl\'s Text to Speech Generator', description='the generated speech is in the embed above!')
             embed.add_field(name='Text', value=text)
             embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
             await ctx.respond(embed=embed, file=response_file)
             response_file.close()
-            os.remove(f'tts/{ctx.author.id}.mp3')
+            os.remove(f'temp/tts-{ctx.author.id}.mp3')
             ttsban.pop(ctx.author.id)
         else: 
             embed = discord.Embed(title='egirl\'s Text to Speech Generator', description=f'Please wait until your text is done generating!')
@@ -1623,10 +1625,12 @@ class cog_all(commands.Cog):
         await ctx.defer()
         word_count = str(len(text.split(' ')))
         char_count = str(len(text))
+        if len(text) > 1024: send_text = text[:1021]+"..."
+        else: send_text = text
         embed = discord.Embed(title=discord.Embed.Empty, description=discord.Embed.Empty)
         embed.add_field(name='words', value=word_count, inline=True)
         embed.add_field(name='characters', value=char_count, inline=True)
-        embed.add_field(name='text', value=text, inline=False)
+        embed.add_field(name='text', value=send_text, inline=False)
         embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
     
@@ -1635,13 +1639,51 @@ class cog_all(commands.Cog):
         await ctx.defer()
         word_count = str(len(text.split(' ')))
         char_count = str(len(text))
+        if len(text) > 1024: send_text = text[:1021]+"..."
+        else: send_text = text
         embed = discord.Embed(title=discord.Embed.Empty, description=discord.Embed.Empty)
         embed.add_field(name='characters', value=char_count, inline=True)
         embed.add_field(name='words', value=word_count, inline=True)
-        embed.add_field(name='text', value=text, inline=False)
+        embed.add_field(name='text', value=send_text, inline=False)
         embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
         await ctx.respond(embed=embed)
-    
+
+    @commands.slash_command(name='ip-gen', description='generate a fake IP address')
+    async def _ip_gen(self, ctx):
+        await ctx.defer()
+        ip = str(random.randrange(10, 255))+'.'+str(random.randrange(10, 255))+'.'+str(random.randrange(10, 255))+'.'+str(random.randrange(10, 255))
+        embed = discord.Embed(title=discord.Embed.Empty, description=f'`{ip}`\nthis IP address is randomly generated, please do not DDOS, DOS or otherwise cause harm to it.')
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
+        await ctx.respond(ip, embed=embed)
+
+    @imagegen.command(name='ip-fortune-cookie', description='generate a fake IP address and put it on a fortune cookie')    
+    async def _imagegen_ip_gen(self, ctx):
+        await ctx.defer()
+        font_size = 130
+
+        x_offset, y_offset = (36, -180)
+
+        ip = str(random.randrange(10, 255))+'.'+str(random.randrange(10, 255))+'.'+str(random.randrange(10, 255))+'.'+str(random.randrange(10, 255))
+        img = Image.open('templates/fortune.png')
+        toplayer = Image.open('templates/fortune2.png')
+        img = img.convert("RGBA")
+        toplayer = toplayer.convert("RGBA")
+        welcFont = ImageFont.truetype('fonts/roboto.ttf', size=font_size)
+        textLayer = Image.new('RGBA', img.size, (255, 255, 255, 0))
+        draw = ImageDraw.Draw(textLayer)
+        text_place_x, text_place_y = img.size
+        draw.text((text_place_x/2, text_place_y/2), f'{ip}', (0, 0, 0), anchor="mm", font=welcFont)
+        textLayer = textLayer.rotate(-344.7,  expand=False)
+        Image.Image.alpha_composite(img, textLayer, (x_offset, y_offset))
+        Image.Image.alpha_composite(img, toplayer)
+        img.save(f'temp/fortune-{ctx.author.id}.png')
+        image_file = discord.File(f'temp/fortune-{ctx.author.id}.png', filename=f'fortune-{ctx.author.id}.png')
+
+        embed = discord.Embed(title=discord.Embed.Empty, description=f'`{ip}`\nthis IP address is randomly generated, please do not DDOS, DOS or otherwise cause harm to it.')
+        embed.set_footer(text=f'{self.bot.user.name} • ©{reportManagerName}', icon_url=f'{self.bot.user.avatar.url}')
+        embed.set_image(url=f'attachment://fortune-{ctx.author.id}.png')
+        await ctx.respond(file=image_file, embed=embed)
+
 def setup(bot):
     bot.add_cog(cog_all(bot))
     print('cog.all loaded')
